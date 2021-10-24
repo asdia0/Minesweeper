@@ -24,7 +24,6 @@
                 minedCells.Add(rnd.Next(0, this.Length * this.Breadth));
             }
 
-
             for (int i = 0; i < length * breadth; i++)
             {
                 this.Cells.Add(new((minedCells.Contains(i)) ? true : false));
