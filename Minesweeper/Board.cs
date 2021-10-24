@@ -26,7 +26,12 @@
             Random rnd = new();
             while (minedCells.Count != mines)
             {
-                minedCells.Add(rnd.Next(0, this.Length * this.Breadth));
+                int randomID = rnd.Next(0, this.Length * this.Breadth);
+
+                if (!minedCells.Contains(randomID))
+                {
+                    minedCells.Add(randomID);
+                }
             }
 
             for (int i = 0; i < length * breadth; i++)
