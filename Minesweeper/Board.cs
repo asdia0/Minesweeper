@@ -6,27 +6,17 @@
 
     public class Board
     {
-        private bool lengthSet = false;
-
-        private bool breadthSet = false;
-
         private int _Length;
 
         private int _Breadth;
+
+        private int _MineCount;
 
         public int Length
         {
             get
             {
-                return _Length;
-            }
-            set
-            {
-                if (!lengthSet)
-                {
-                    this._Length = value;
-                    this.lengthSet = true;
-                }
+                return this._Length;
             }
         }
 
@@ -34,15 +24,41 @@
         {
             get
             {
-                return _Breadth;
+                return this._Breadth;
             }
-            set
+        }
+
+        public int MineCount
+        {
+            get
             {
-                if (!breadthSet)
+                return this._MineCount;
+            }
+        }
+
+        /// <summary>
+        /// Gets a value determining if the player has hit a mine.
+        /// </summary>
+        public bool IsOver
+        {
+            get
+            {
+                return this.Cells.Where(i => i.IsSearched && i.HasMine).Any();
+            }
+        }
+
+        /// <summary>
+        /// Gets a value determining if the player has successfully completed the game.
+        /// </summary>
+        public bool IsFinished
+        {
+            get
+            {
+                if (this.Cells.Where(i => i.IsSearched && !i.HasMine).ToList().Count == this.Length * this.Breadth - this.MineCount)
                 {
-                    this._Breadth = value;
-                    this.breadthSet = true;
+                    return true;
                 }
+                return false;
             }
         }
 
@@ -55,8 +71,9 @@
                 throw new MinesweeperException("The number of mines must be less than or equal to the number of cells.");
             }
 
-            this.Length = length;
-            this.Breadth = breadth;
+            this._Length = length;
+            this._Breadth = breadth;
+            this._MineCount = mines;
 
             List<int> minedCells = new();
             Random rnd = new();
@@ -87,7 +104,23 @@
                     board += "\n";
                 }
 
-                board += this.Cells[i].HasMine ? "X" : this.Cells[i].CellNumber;
+                Cell cell = this.Cells[i];
+
+                if (cell.IsSearched)
+                {
+                    if (cell.HasMine)
+                    {
+                        board += "X";
+                    }
+                    else
+                    {
+                        board += cell.CellNumber;
+                    }
+                }
+                else
+                {
+                    board += ".";
+                }
             }
 
             return board.Trim();

@@ -1,30 +1,23 @@
 ﻿namespace Minesweeper
 {
     using System.Collections.Generic;
+    using System.Linq;
 
     public class Cell
     {
-        private bool boardSet = false;
-
-        private bool IDSet = false;
-
         private Board _Board;
 
         private int _ID;
+
+        private bool _HasMine;
+
+        private bool _IsVisible = false;
 
         public Board Board
         {
             get
             {
                 return _Board;
-            }
-            set
-            {
-                if (!boardSet)
-                {
-                    this._Board = value;
-                    this.boardSet = true;
-                }
             }
         }
 
@@ -34,21 +27,23 @@
             {
                 return this._ID;
             }
-            set
+        }
+
+        public bool HasMine
+        {
+            get
             {
-                if (!this.IDSet)
-                {
-                    this._ID = value;
-                    this.IDSet = true;
-                }
+                return this._HasMine;
             }
         }
 
-        public bool IsFlagged { get; set; }
-
-        public bool HasMine { get; set; }
-
-        public bool IsSearched { get; set; }
+        public bool IsSearched
+        {
+            get
+            {
+                return this._IsVisible;
+            }
+        }
 
         public int CellNumber
         {
@@ -116,16 +111,36 @@
 
         public Cell(Board board, int id, bool hasMine)
         {
-            this.Board = board;
-            this.ID = id;
-            this.IsFlagged = false;
-            this.HasMine = hasMine;
-            this.IsSearched = false;
+            this._Board = board;
+            this._ID = id;
+            this._HasMine = hasMine;
         }
 
-        public void SwitchFlagState()
+        public void Search()
         {
-            this.IsFlagged ^= true;
+            this._IsVisible = true;
+
+            if (this.CellNumber == 0 && !this.HasMine)
+            {
+                List<Cell> candidates = this.Neighbours.ToList();
+
+                while (candidates.Count != 0)
+                {
+                    Cell cell = candidates[0];
+
+                    if (!cell.IsSearched && !cell.HasMine)
+                    {
+                        cell._IsVisible = true;
+
+                        if (cell.CellNumber == 0)
+                        {
+                            candidates.AddRange(cell.Neighbours);
+                        }
+                    }
+
+                    candidates.Remove(cell);
+                }
+            }
         }
     }
 }
