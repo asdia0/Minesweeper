@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
 
     public class Board
     {
@@ -28,6 +29,33 @@
             {
                 this.Cells.Add(new((minedCells.Contains(i)) ? true : false));
             }
+        }
+
+        public int GetCellNumber(int cellID)
+        {
+            int count = 0;
+
+            List<int> neighbourIDs = new()
+            {
+                cellID - this.Breadth - 1,
+                cellID - this.Breadth,
+                cellID - this.Breadth + 1,
+                cellID - 1,
+                cellID + 1,
+                cellID + this.Breadth - 1,
+                cellID + this.Breadth,
+                cellID + this.Breadth + 1,
+            };
+
+            foreach (int id in neighbourIDs.Where(i => (0 <= i) && (i < this.Length * this.Breadth)))
+            {
+                if (this.Cells[id].HasMine)
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
     }
 }
