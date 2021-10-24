@@ -6,11 +6,11 @@
 
     public class Board
     {
-        private int Length;
+        public int Length;
 
-        private int Breadth;
+        public int Breadth;
 
-        private List<Cell> Cells = new();
+        public List<Cell> Cells = new();
 
         public Board(int length, int breadth, int mines)
         {
@@ -36,35 +36,8 @@
 
             for (int i = 0; i < length * breadth; i++)
             {
-                this.Cells.Add(new((minedCells.Contains(i)) ? true : false));
+                this.Cells.Add(new(this, i, (minedCells.Contains(i)) ? true : false));
             }
-        }
-
-        public int GetCellNumber(int cellID)
-        {
-            int count = 0;
-
-            List<int> neighbourIDs = new()
-            {
-                cellID - this.Breadth - 1,
-                cellID - this.Breadth,
-                cellID - this.Breadth + 1,
-                cellID - 1,
-                cellID + 1,
-                cellID + this.Breadth - 1,
-                cellID + this.Breadth,
-                cellID + this.Breadth + 1,
-            };
-
-            foreach (int id in neighbourIDs.Where(i => (0 <= i) && (i < this.Length * this.Breadth)))
-            {
-                if (this.Cells[id].HasMine)
-                {
-                    count++;
-                }
-            }
-
-            return count;
         }
 
         public override string ToString()
@@ -78,7 +51,7 @@
                     board += "\n";
                 }
 
-                board += this.GetCellNumber(i);
+                board += this.Cells[i].HasMine ? "X" : this.Cells[i].CellNumber;
             }
 
             return board.Trim();
