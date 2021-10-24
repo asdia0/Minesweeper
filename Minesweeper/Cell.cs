@@ -6,6 +6,8 @@
 
         public bool HasMine;
 
+        public bool IsSearched = false;
+
         public Cell(bool hasMine)
         {
             this.HasMine = hasMine;
