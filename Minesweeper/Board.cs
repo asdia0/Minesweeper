@@ -57,5 +57,22 @@
 
             return count;
         }
+
+        public override string ToString()
+        {
+            string board = string.Empty;
+
+            for (int i = 0; i < this.Length * this.Breadth; i++)
+            {
+                if ((i + 1) % this.Breadth == 0)
+                {
+                    board += "\n";
+                }
+
+                board += this.GetCellNumber(i);
+            }
+
+            return board;
+        }
     }
 }
