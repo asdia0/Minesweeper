@@ -8,7 +8,7 @@
 
         private int Breadth;
 
-        private List<Cell> Cells { get; set; }
+        private List<Cell> Cells = new();
 
         public Board(int length, int breadth)
         {
@@ -17,7 +17,6 @@
 
             for (int i = 0; i < length * breadth; i++)
             {
-                this.Cells = new();
                 this.Cells.Add(new());
             }
         }
