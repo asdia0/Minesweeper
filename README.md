@@ -1,0 +1,2 @@
+# Minesweeper
+A minesweeper algorithm.
