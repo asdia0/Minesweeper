@@ -3,48 +3,66 @@
     using System.Collections.Generic;
     using System.Linq;
 
+    /// <summary>
+    /// Represnts a cell on a <see cref="Grid"/>.
+    /// </summary>
     public class Cell
     {
-        private Board _Board;
+        private Grid _board;
 
-        private int _ID;
+        private int _id;
 
-        private bool _HasMine;
+        private bool _hasMine;
 
-        private bool _IsVisible = false;
+        private bool _isSearched = false;
 
-        public Board Board
+        /// <summary>
+        /// Gets the <see cref="Grid"/> the <see cref="Cell"/> is on.
+        /// </summary>
+        public Grid Board
         {
             get
             {
-                return _Board;
+                return this._board;
             }
         }
 
+        /// <summary>
+        /// Gets the <see cref="Cell"/>'s >unique indentification number.
+        /// </summary>
         public int ID
         {
             get
             {
-                return this._ID;
+                return this._id;
             }
         }
 
+        /// <summary>
+        /// Gets a value indicating whether the <see cref="Cell"/> has a mine.
+        /// </summary>
         public bool HasMine
         {
             get
             {
-                return this._HasMine;
+                return this._hasMine;
             }
         }
 
+        /// <summary>
+        /// Gets a value indicating whether the <see cref="Cell"/> has been searched.
+        /// </summary>
         public bool IsSearched
         {
             get
             {
-                return this._IsVisible;
+                return this._isSearched;
             }
         }
 
+        /// <summary>
+        /// Gets the number of <see cref="Neighbours"/> that have a mine.
+        /// </summary>
         public int CellNumber
         {
             get
@@ -63,7 +81,10 @@
             }
         }
 
-        public (int, int) Position
+        /// <summary>
+        /// Gets the <see cref="Cell"/>'s coordinates as (x,y), where x is the horizontal axis and y is the vertical axis. (0,0) is at the top-left corner.
+        /// </summary>
+        public (int, int) Coordinates
         {
             get
             {
@@ -74,13 +95,16 @@
             }
         }
 
+        /// <summary>
+        /// Gets a list of neighbouring <see cref="Cells"/>.
+        /// </summary>
         public List<Cell> Neighbours
         {
             get
             {
                 List<Cell> results = new();
 
-                (int x, int y) = this.Position;
+                (int x, int y) = this.Coordinates;
 
                 List<(int, int)> candidates = new()
                 {
@@ -98,7 +122,7 @@
                 {
                     foreach (Cell candidateCell in this.Board.Cells)
                     {
-                        if (candidateCell.Position == position)
+                        if (candidateCell.Coordinates == position)
                         {
                             results.Add(candidateCell);
                         }
@@ -109,16 +133,28 @@
             }
         }
 
-        public Cell(Board board, int id, bool hasMine)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Cell"/> class.
+        /// </summary>
+        /// <param name="board">The <see cref="Board"/> the <see cref="Cell"/> is on.</param>
+        /// <param name="id">The <see cref="Cell"/>'s unique identification number.</param>
+        /// <param name="hasMine">A value indicating whether the <see cref="Cell"/> has a mine.</param>
+        public Cell(Grid board, int id, bool hasMine)
         {
-            this._Board = board;
-            this._ID = id;
-            this._HasMine = hasMine;
+            this._board = board;
+            this._id = id;
+            this._hasMine = hasMine;
         }
 
+        /// <summary>
+        /// Searches the <see cref="Cell"/>. This causes <see cref="IsSearched"/> to become `true`.
+        /// Furthermore, if <see cref="CellNumber"/> is `0`, then the cell's <see cref="Neighbours"/>
+        /// that are not mines will also be considered to be searched. This continues if a neighbouring
+        /// cell's <see cref="CellNumber"/> is also `0`.
+        /// </summary>
         public void Search()
         {
-            this._IsVisible = true;
+            this._isSearched = true;
 
             if (this.CellNumber == 0 && !this.HasMine)
             {
@@ -130,7 +166,7 @@
 
                     if (!cell.IsSearched && !cell.HasMine)
                     {
-                        cell._IsVisible = true;
+                        cell._isSearched = true;
 
                         if (cell.CellNumber == 0)
                         {

@@ -8,7 +8,7 @@
     {
         static void Main()
         {
-            Board board = new(5, 5, 5);
+            Grid board = new(5, 5, 5);
 
             while (!board.IsOver && !board.IsFinished)
             {
