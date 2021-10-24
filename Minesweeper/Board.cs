@@ -73,7 +73,7 @@
 
             for (int i = 0; i < this.Length * this.Breadth; i++)
             {
-                if ((i + 1) % this.Breadth == 0)
+                if (i % this.Breadth == 0)
                 {
                     board += "\n";
                 }
@@ -81,7 +81,7 @@
                 board += this.GetCellNumber(i);
             }
 
-            return board;
+            return board.Trim();
         }
     }
 }
