@@ -1,7 +1,6 @@
 ﻿namespace Minesweeper.Interaction
 {
     using System;
-    using System.Linq;
     using Minesweeper;
 
     class Program
