@@ -14,7 +14,7 @@
 
         public Board(int length, int breadth, int mines)
         {
-            if (mines > this.Length * this.Breadth)
+            if (mines > length * breadth)
             {
                 throw new MinesweeperException("The number of mines must be less than or equal to the number of cells.");
             }
