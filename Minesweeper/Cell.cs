@@ -4,17 +4,80 @@
 
     public class Cell
     {
+        private bool boardSet = false;
+
         private bool IDSet = false;
+
+        private Board _Board;
 
         private int _ID;
 
-        public bool IsFlagged = false;
+        public Board Board
+        {
+            get
+            {
+                return _Board;
+            }
+            set
+            {
+                if (!boardSet)
+                {
+                    this._Board = value;
+                    this.boardSet = true;
+                }
+            }
+        }
 
-        public bool HasMine;
+        public int ID
+        {
+            get
+            {
+                return this._ID;
+            }
+            set
+            {
+                if (!this.IDSet)
+                {
+                    this._ID = value;
+                    this.IDSet = true;
+                }
+            }
+        }
 
-        public bool IsSearched = false;
+        public bool IsFlagged { get; set; }
 
-        public Board Board;
+        public bool HasMine { get; set; }
+
+        public bool IsSearched { get; set; }
+
+        public int CellNumber
+        {
+            get
+            {
+                int counter = 0;
+
+                foreach (Cell cell in this.Neighbours)
+                {
+                    if (cell.HasMine)
+                    {
+                        counter++;
+                    }
+                }
+
+                return counter;
+            }
+        }
+
+        public (int, int) Position
+        {
+            get
+            {
+                int row = this.ID / this.Board.Breadth;
+                int column = this.ID % this.Board.Breadth;
+
+                return (row, column);
+            }
+        }
 
         public List<Cell> Neighbours
         {
@@ -51,56 +114,13 @@
             }
         }
 
-        public int CellNumber
-        {
-            get
-            {
-                int counter = 0;
-
-                foreach (Cell cell in this.Neighbours)
-                {
-                    if (cell.HasMine)
-                    {
-                        counter++;
-                    }
-                }
-
-                return counter;
-            }
-        }
-
-        public int ID
-        {
-            get
-            {
-                return this._ID;
-            }
-            set
-            {
-                if (!this.IDSet)
-                {
-                    this._ID = value;
-                    this.IDSet = true;
-                }
-            }
-        }
-
-        public (int, int) Position
-        {
-            get
-            {
-                int row = this.ID / this.Board.Breadth;
-                int column = this.ID % this.Board.Breadth;
-
-                return (row, column);
-            }
-        }
-
         public Cell(Board board, int id, bool hasMine)
         {
             this.Board = board;
             this.ID = id;
+            this.IsFlagged = false;
             this.HasMine = hasMine;
+            this.IsSearched = false;
         }
 
         public void SwitchFlagState()

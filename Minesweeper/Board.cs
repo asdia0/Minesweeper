@@ -6,9 +6,45 @@
 
     public class Board
     {
-        public int Length;
+        private bool lengthSet = false;
 
-        public int Breadth;
+        private bool breadthSet = false;
+
+        private int _Length;
+
+        private int _Breadth;
+
+        public int Length
+        {
+            get
+            {
+                return _Length;
+            }
+            set
+            {
+                if (!lengthSet)
+                {
+                    this._Length = value;
+                    this.lengthSet = true;
+                }
+            }
+        }
+
+        public int Breadth
+        {
+            get
+            {
+                return _Breadth;
+            }
+            set
+            {
+                if (!breadthSet)
+                {
+                    this._Breadth = value;
+                    this.breadthSet = true;
+                }
+            }
+        }
 
         public List<Cell> Cells = new();
 
