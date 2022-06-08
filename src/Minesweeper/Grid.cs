@@ -15,12 +15,12 @@
         public Game Game { get; init; }
 
         /// <summary>
-        /// Gets the length (y-axis) of the <see cref="Grid">grid </see> measured in <see cref="Cells">cells</see>.
+        /// Gets the length (y-axis) of the <see cref="Grid">grid </see> measured in <see cref="Cell">cells</see>.
         /// </summary>
         public int Length { get; init; }
 
         /// <summary>
-        /// Gets the width (x-axis) of the <see cref="Grid">grid </see> measured in <see cref="Cells">cells</see>.
+        /// Gets the width (x-axis) of the <see cref="Grid">grid </see> measured in <see cref="Cell">cells</see>.
         /// </summary>
         public int Width { get; init; }
 
@@ -61,14 +61,9 @@
             }
 
             // Create cells.
-            for (int id = 0; id < this.Length * this.Width; id++)
+            for (int index = 0; index < this.Length * this.Width; index++)
             {
-                // Convert ID to coordinates: (0, 0), (0, 1), ... (0, n), (1, 0), ... (m, n).
-                int x = id % this.Width;
-                int y = (id - x) / this.Width;
-
-                // Add cell.
-                this.Cells.Add(new(this, new(length, width, (x, y)), minesArray[id]));
+                this.Cells.Add(new(this, new(length, width, Utility.CellIndexToCoordinates(index, this.Width)), minesArray[index]));
             }
         }
 

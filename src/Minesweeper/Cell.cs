@@ -63,7 +63,7 @@
                 List<(int x, int y)> points = this.Point.AdjacentPoints;
 
                 // Convert the coordinates to IDs.
-                List<int> ids = points.Select(coor => coor.x + (coor.y * this.Grid.Width)).ToList();
+                List<int> ids = points.Select(coor => Utility.CellCoordinatesToIndex(coor, this.Grid.Width)).ToList();
 
                 // Return the list of cells with the mapped IDs.
                 return ids.Select(cell => this.Grid.Cells[cell]).ToList();

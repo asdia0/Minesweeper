@@ -60,10 +60,7 @@
         public Point(int length, int width, (int x, int y) coordinates)
         {
             // Catch invalid parameters.
-            if (length <= 0 || width <= 0)
-            {
-                throw new MinesweeperException("Invalid grid size: grid size must be positive.");
-            }
+            Utility.CheckGridParams(length, width, 1);
 
             // Assign properties.
             this.Length = length;
