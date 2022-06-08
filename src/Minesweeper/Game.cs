@@ -9,11 +9,7 @@
     {
         private DateTime? end = null;
 
-        private bool endSet = false;
-
         private DateTime? start = null;
-
-        private bool startSet = false;
 
         /// <summary>
         /// Gets the <see cref="Grid">grid</see> the <see cref="Game">game</see> is played on.
@@ -38,10 +34,9 @@
 
             set
             {
-                if (!this.startSet)
+                if (this.start == null)
                 {
                     this.start = value;
-                    this.startSet = true;
                 }
             }
         }
@@ -59,10 +54,9 @@
 
             set
             {
-                if (!this.endSet)
+                if (this.end == null)
                 {
                     this.end = value;
-                    this.endSet = true;
                 }
             }
         }
