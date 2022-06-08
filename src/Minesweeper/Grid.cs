@@ -25,6 +25,11 @@
         public int Width { get; init; }
 
         /// <summary>
+        /// Gets the number of mines on the <see cref="Grid">grid</see>.
+        /// </summary>
+        public int Mines { get; init; }
+
+        /// <summary>
         /// Gets the <see cref="Cell">cells</see> on the <see cref="Grid">grid</see>.
         /// </summary>
         public List<Cell> Cells { get; init; }
@@ -45,6 +50,7 @@
             this.Game = game;
             this.Length = length;
             this.Width = width;
+            this.Mines = mines;
             this.Cells = new();
 
             // Randomly generate mines.
@@ -77,7 +83,7 @@
         public void OpenCell(Cell cell)
         {
             // Check if game has ended.
-            if (this.Game.State != State.Ongoing)
+            if (this.Game.End != null)
             {
                 return;
             }
@@ -95,8 +101,9 @@
             }
 
             // Check if this is the first cell being opened.
-            if (this.Cells.Where(cell => cell.IsOpen).Any())
+            if (!this.Cells.Where(cell => cell.IsOpen).Any())
             {
+                this.Game.State = State.Ongoing;
                 this.Game.Start = DateTime.Now;
             }
 
@@ -112,7 +119,14 @@
                 case 0:
                     List<Cell> adjacentCells = cell.AdjacentCells;
                     adjacentCells.ForEach(cell => this.OpenCell(cell));
-                    return;
+                    break;
+            }
+
+            // Mark game as won if all cells without mines have been opened.
+            if (!this.Cells.Where(cell => !cell.HasMine && !cell.IsOpen).Any())
+            {
+                this.Game.State = State.Success;
+                this.Game.End = DateTime.Now;
             }
         }
     }

@@ -6,7 +6,7 @@
     /// <summary>
     /// Represents a particular point on a lattice.
     /// </summary>
-    public class Point
+    public record Point
     {
         /// <summary>
         /// Gets the maximum y-value the <see cref="Coordinates">coordinates</see> can take on.
@@ -40,7 +40,7 @@
                     (x - 1, y),
                     (x - 1, y + 1),
                     (x, y - 1),
-                    (x, y - 1),
+                    (x, y + 1),
                     (x + 1, y - 1),
                     (x + 1, y),
                     (x + 1, y + 1),
