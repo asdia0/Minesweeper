@@ -62,10 +62,10 @@
                 // Get a list of the coordinates of adjacent cells.
                 List<(int x, int y)> points = this.Point.AdjacentPoints;
 
-                // Convert the coordinates to IDs.
+                // Convert the coordinates to indexes.
                 List<int> ids = points.Select(coor => Utility.CellCoordinatesToIndex(coor, this.Grid.Width)).ToList();
 
-                // Return the list of cells with the mapped IDs.
+                // Return the list of cells with the mapped indexes.
                 return ids.Select(cell => this.Grid.Cells[cell]).ToList();
             }
         }
