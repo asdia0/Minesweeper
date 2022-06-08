@@ -39,15 +39,7 @@
         public Grid(Game game, int length, int width, int mines)
         {
             // Catch invalid parameters.
-            if (length <= 0 || width <= 0)
-            {
-                throw new MinesweeperException("Invalid grid size: grid size must be positive.");
-            }
-
-            if (mines <= 0)
-            {
-                throw new MinesweeperException("Invalid number of mines: number of mines must be positive.");
-            }
+            Utility.CheckGridParams(length, width, mines);
 
             // Assign properties.
             this.Game = game;
