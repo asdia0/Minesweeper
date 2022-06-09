@@ -82,20 +82,12 @@
         /// <param name="cell">The <see cref="Cell">cell</see> to open.</param>
         public void OpenCell(Cell cell)
         {
-            // Check if game has ended.
-            if (this.Game.End != null)
-            {
-                return;
-            }
-
-            // Check if cell is in correct grid.
-            if (cell.Grid != this)
-            {
-                return;
-            }
-
-            // Check if cell has already been opened.
-            if (cell.IsOpen)
+            // Skip cell if
+            // 1. game has ended
+            // 2. cell is in incorrect grid
+            // 3. cell has already been opened
+            // 4. cell is flagged.
+            if (this.Game.End != null || cell.Grid != this || cell.IsOpen || cell.HasFlag)
             {
                 return;
             }

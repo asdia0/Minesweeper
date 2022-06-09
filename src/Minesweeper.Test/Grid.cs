@@ -3,7 +3,7 @@ namespace Minesweeper.Test
     using System.Collections.Generic;
     using System.Linq;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    
+
     [TestClass]
     public class TGrid
     {
@@ -25,7 +25,7 @@ namespace Minesweeper.Test
             Assert.AreEqual(7, grid.Cells.Where(cell => cell.HasMine).Count());
 
             // Check that the game has not yet started.
-            Assert.AreEqual(null, game.State);
+            Assert.IsNull(game.State);
         }
 
         [TestMethod]
@@ -94,6 +94,46 @@ namespace Minesweeper.Test
 
             // Check that the game has ended.
             Assert.AreEqual(State.Fail, game.State);
+        }
+
+        [TestMethod]
+        public void OpenCell_Flag()
+        {
+            // Create a grid.
+            Game game = new(5, 5, 1);
+            Grid grid = game.Grid;
+
+            // Select cell which is at least 2 cells away from a mine
+            Cell cell = grid.Cells.Where(cell => cell.Count == 0 && !cell.AdjacentCells.Where(adjCell => adjCell.Count != 0).Any()).First();
+
+            // Flag an adjacent cell
+            Cell flag = cell.AdjacentCells[0];
+            flag.HasFlag = true;
+
+            // Check then when opened, only a certain number of cells are opened.
+            grid.OpenCell(cell);
+
+            // List all the possible numbers of opened cells.
+            // Same possibilities as OpenCell_ZeroCount, but with 1 less cell.
+            List<int> possibilities = new()
+            {
+                20,
+                22,
+                23,
+            };
+
+            int count = grid.Cells.Where(cell => cell.IsOpen).Count();
+
+            CollectionAssert.Contains(possibilities, count);
+
+            // Check that cell with flag has not been opened.
+            Assert.IsFalse(flag.IsOpen);
+
+            // Check that game has been won if all non-mine cells have been opened.
+            if (count == 23)
+            {
+                Assert.AreEqual(State.Success, game.State);
+            }
         }
     }
 }
