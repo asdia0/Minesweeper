@@ -121,5 +121,22 @@
                 this.Game.End = DateTime.Now;
             }
         }
+
+        /// <summary>
+        /// Opens a  <see cref="Cell">cell</see> and all adjacent cells if the number of flags surrounding it matches its <see cref="Cell.Count">count</see>.
+        /// </summary>
+        /// <param name="cell">The <see cref="Cell">cell</see> to chord on.</param>
+        public void Chord(Cell cell)
+        {
+            // Only chord on cells with the correct number of flags surrounding it.
+            if (cell.Count == cell.AdjacentCells.Where(cell => cell.HasFlag).Count())
+            {
+                // Open cell and its adjacent cells.
+                this.OpenCell(cell);
+                cell.AdjacentCells.ForEach(adjCell => this.OpenCell(adjCell));
+            }
+
+            return;
+        }
     }
 }

@@ -103,7 +103,7 @@ namespace Minesweeper.Test
             Game game = new(5, 5, 1);
             Grid grid = game.Grid;
 
-            // Select cell which is at least 2 cells away from a mine
+            // Select a cell which is at least 2 cells away from a mine
             Cell cell = grid.Cells.Where(cell => cell.Count == 0 && !cell.AdjacentCells.Where(adjCell => adjCell.Count != 0).Any()).First();
 
             // Flag an adjacent cell
@@ -134,6 +134,44 @@ namespace Minesweeper.Test
             {
                 Assert.AreEqual(State.Success, game.State);
             }
+        }
+
+        [TestMethod]
+        public void Chord_UnequalFlags()
+        {
+            // Create a grid.
+            Game game = new(2, 2, 1);
+            Grid grid = game.Grid;
+
+            // Flag the cell with the mine.
+            grid.Cells.Where(cell => cell.HasMine).First().HasFlag = true;
+
+            // Flag another cell.
+            grid.Cells.Where(cell => !cell.HasMine).First().HasFlag = true;
+
+            // Chord a separate cell.
+            grid.Chord(grid.Cells.Where(cell => !cell.HasMine).Last());
+
+            // Check that no cells are opened.
+            Assert.AreEqual(0, grid.Cells.Where(cell => cell.IsOpen).Count());
+        }
+
+        [TestMethod]
+        public void Chord_EqualFlags()
+        {
+            // Create a grid.
+            Game game = new(2, 2, 1);
+            Grid grid = game.Grid;
+
+            // Flag the cell with the mine.
+            grid.Cells.Where(cell => cell.HasMine).First().HasFlag = true;
+
+            // Chord a separate cell.
+            grid.Chord(grid.Cells.Where(cell => !cell.HasMine).First());
+
+            // Check that all cells are opened and the game has ended.
+            Assert.AreEqual(3, grid.Cells.Where(cell => cell.IsOpen).Count());
+            Assert.AreEqual(State.Success, game.State);
         }
     }
 }
