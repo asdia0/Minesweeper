@@ -1,2 +1,2 @@
 # Minesweeper
-A minesweeper algorithm.
+A minesweeper library for C#.
