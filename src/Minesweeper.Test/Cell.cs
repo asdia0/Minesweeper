@@ -76,7 +76,7 @@
             Cell cell = grid.Cells.Where(cell => cell.HasMine).First();
 
             // Check that cell.Count returns null.
-            Assert.AreEqual(null, cell.Count);
+            Assert.IsNull(cell.Count);
         }
 
         [TestMethod]
