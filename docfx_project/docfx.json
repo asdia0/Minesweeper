@@ -3,9 +3,9 @@
     {
       "src": [
         {
-          "files": [
-            "src/**.csproj"
-          ]
+          "files": ["**/*.csproj"],
+          "exclude": [ "**/bin/**", "**/obj/**" ],
+          "src": "../src"
         }
       ],
       "dest": "api",
