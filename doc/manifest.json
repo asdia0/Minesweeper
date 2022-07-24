@@ -1,0 +1,299 @@
+{
+  "homepages": [],
+  "source_base_path": "C:/Users/eytan/source/repos/asdia0/Minesweeper/docfx_project",
+  "xrefmap": "xrefmap.yml",
+  "files": [
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Minesweeper.Cell.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Minesweeper.Cell.html",
+          "hash": "bbKRFLiCPnY1A0UOH1pH16QuMCwP4h5jCQmujJ7drC8="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Minesweeper.Game.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Minesweeper.Game.html",
+          "hash": "nWhIe3s1tRL09DOb3LB1UOCXi+j5jXYmZQ0UVxvEVjI="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Minesweeper.Grid.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Minesweeper.Grid.html",
+          "hash": "WIB3RU0/9cbKXdoVahk+jQq7Jc8r9J325seSgTxDsI8="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Minesweeper.MinesweeperException.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Minesweeper.MinesweeperException.html",
+          "hash": "c/ibO20J5fhug3WqfXB4fbZnuhpxCfMPY/n8UNcuifQ="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Minesweeper.Point.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Minesweeper.Point.html",
+          "hash": "Tzkqv7QeCPxikMm7phBtwXhoUA/hrF2Is3VDBNJY1Yc="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Minesweeper.State.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Minesweeper.State.html",
+          "hash": "IhB12p/5qM3EbA31HZ4e2CH0Rjumk0YW5zWPhmn/37U="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Minesweeper.Test.TCell.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Minesweeper.Test.TCell.html",
+          "hash": "/opwofoIYqO1u9Cnn770Tz/w4EMRG+N6KZucrNUGF6I="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Minesweeper.Test.TGrid.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Minesweeper.Test.TGrid.html",
+          "hash": "X9Xk1sbW3IhIhPnrwR5OBy1rOAzFUiQCE/Qt4L8SidU="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Minesweeper.Test.TUtility.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Minesweeper.Test.TUtility.html",
+          "hash": "AfltaeZqWsJyu90Y1JGedpwOzMb08tPApOgDojieAYM="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Minesweeper.Test.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Minesweeper.Test.html",
+          "hash": "D4hApSkm1laNdySAi/6epluAWXR/5jdw89cecDzkycs="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Minesweeper.UI.App.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Minesweeper.UI.App.html",
+          "hash": "4DQmtzZAc5uqtryhAjxklEkOxBdnexal+wsfkZ7QeK8="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Minesweeper.UI.GameWindow.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Minesweeper.UI.GameWindow.html",
+          "hash": "UvP7oocndUrYZk8UjhDJKjYWcjOF7G3gzTaVmnCrKuc="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Minesweeper.UI.RulesWindow.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Minesweeper.UI.RulesWindow.html",
+          "hash": "zukl3JCa98H/ijUIGp2pBZDViV8+J/LPGT1AzUGNZv8="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Minesweeper.UI.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Minesweeper.UI.html",
+          "hash": "kH3Y4Yoj0Y6bskyoqcpVB5uWCXHRsganXPktwDMAEwQ="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Minesweeper.Utility.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Minesweeper.Utility.html",
+          "hash": "MHYFjifxEfnEgZohiL0DIqVUZpIBcIMuNDcOhXv6Yts="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Minesweeper.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Minesweeper.html",
+          "hash": "TtiwamrZ1d4vYehvvQrT8RPmbkBwmoFrNVlPyRryQqQ="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "log_codes": [
+        "InvalidFileLink"
+      ],
+      "type": "Conceptual",
+      "source_relative_path": "api/index.md",
+      "output": {
+        ".html": {
+          "relative_path": "api/index.html",
+          "hash": "3Sv7dk6gj6mVx3ByTWUm1sJqjgoKhhcfbxc+UG6kmDI="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Toc",
+      "source_relative_path": "api/toc.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/toc.html",
+          "hash": "aUt2xXYcIaDBhvpvPF0ngf+jH22R+PMOvL2t9NfBFzM="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "index.md",
+      "output": {
+        ".html": {
+          "relative_path": "index.html",
+          "hash": "5CXf+ErnhzVggUgP+KaqSTlcKgs5FuGK1QMJxLuXtdQ="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Toc",
+      "source_relative_path": "toc.yml",
+      "output": {
+        ".html": {
+          "relative_path": "toc.html",
+          "hash": "s+UecGKJLe11K3w4+MJjx6QoiqktkO8teeQG06lk8L0="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    }
+  ],
+  "incremental_info": [
+    {
+      "status": {
+        "can_incremental": false,
+        "details": "Cannot build incrementally because config changed.",
+        "incrementalPhase": "build",
+        "total_file_count": 0,
+        "skipped_file_count": 0,
+        "full_build_reason_code": "ConfigChanged"
+      },
+      "processors": {
+        "ConceptualDocumentProcessor": {
+          "can_incremental": false,
+          "incrementalPhase": "build",
+          "total_file_count": 2,
+          "skipped_file_count": 0
+        },
+        "ManagedReferenceDocumentProcessor": {
+          "can_incremental": false,
+          "incrementalPhase": "build",
+          "total_file_count": 16,
+          "skipped_file_count": 0
+        },
+        "TocDocumentProcessor": {
+          "can_incremental": false,
+          "details": "Processor TocDocumentProcessor cannot support incremental build because the processor doesn't implement ISupportIncrementalDocumentProcessor interface.",
+          "incrementalPhase": "build",
+          "total_file_count": 0,
+          "skipped_file_count": 0
+        }
+      }
+    },
+    {
+      "status": {
+        "can_incremental": true,
+        "details": "Can support incremental post processing.",
+        "incrementalPhase": "postProcessing",
+        "total_file_count": 0,
+        "skipped_file_count": 0
+      },
+      "processors": {}
+    }
+  ],
+  "version_info": {},
+  "groups": [
+    {
+      "xrefmap": "xrefmap.yml"
+    }
+  ]
+}
