@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31729.503
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33205.214
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Minesweeper", "Minesweeper\Minesweeper.csproj", "{4B019BEE-97BC-482E-B283-DBEDAD8CC120}"
 EndProject
@@ -12,7 +12,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Minesweeper.Test", "Minesweeper.Test\Minesweeper.Test.csproj", "{91DAF445-5D64-413F-B6B4-B542CF232F84}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Minesweeper.UI", "Minesweeper.UI\Minesweeper.UI.csproj", "{463FF8BA-061D-4994-B060-719C0AD71EC4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Minesweeper.UI", "Minesweeper.UI\Minesweeper.UI.csproj", "{463FF8BA-061D-4994-B060-719C0AD71EC4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Minesweeper.TestConsole", "Minesweeper.IO\Minesweeper.TestConsole.csproj", "{616435B7-C111-484D-9B78-501892726337}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,6 +34,10 @@ Global
 		{463FF8BA-061D-4994-B060-719C0AD71EC4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{463FF8BA-061D-4994-B060-719C0AD71EC4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{463FF8BA-061D-4994-B060-719C0AD71EC4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{616435B7-C111-484D-9B78-501892726337}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{616435B7-C111-484D-9B78-501892726337}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{616435B7-C111-484D-9B78-501892726337}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{616435B7-C111-484D-9B78-501892726337}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
