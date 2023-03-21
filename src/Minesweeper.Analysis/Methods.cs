@@ -22,7 +22,7 @@
 
             List<Cell> toSearch = new();
 
-            while (searched.Count() != cells.Count())
+            while (searched.Count != cells.Count)
             {
                 Cell seed = null;
 
