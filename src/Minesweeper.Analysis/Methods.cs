@@ -5,6 +5,13 @@
 
     public class Methods
     {
+        /// <summary>
+        /// Counts the number of islands on a <see cref="Grid">grid</see>.
+        /// Islands are defined as a group of cells that are numbers or mines that are surrounded by
+        ///     openings (cells that are not adjacent to a mine) and the edge of the grid.
+        /// </summary>
+        /// <param name="grid">The <see cref="Grid">grid</see> to calculate.</param>
+        /// <returns>The number of islands on the given <see cref="Grid">grid</see>. The minimum possible value is 1.</returns>
         public static int IslandCount(Grid grid)
         {
             int count = 0;
