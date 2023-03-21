@@ -74,5 +74,14 @@
 
             this.Grid = new(this, length, width, mines);
         }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Game"/> class.
+        /// </summary>
+        /// <param name="grid">The <see cref="Grid"/> the game is played on.</param>
+        public Game(Grid grid)
+        {
+            this.Grid = grid;
+        }
     }
 }
