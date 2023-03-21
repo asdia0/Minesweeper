@@ -52,6 +52,30 @@
         }
 
         /// <summary>
+        /// Gets a list of <see cref="Coordinates">coordinates</see> orthogonally adjacent to the current <see cref="Point">point</see>. Points diagonal to the current point are considered adjacent.
+        /// </summary>
+        public List<(int X, int Y)> OrthogonallyAdjacentPoints
+        {
+            get
+            {
+                // Create a list of candidate points.
+                int x = this.Coordinates.X;
+                int y = this.Coordinates.Y;
+
+                List<(int x, int y)> points = new()
+                {
+                    (x - 1, y),
+                    (x, y - 1),
+                    (x, y + 1),
+                    (x + 1, y),
+                };
+
+                // Keep valid points.
+                return points.Where(coor => coor.x >= 0 && coor.x < this.Width && coor.y >= 0 && coor.y < this.Length).ToList();
+            }
+        }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="Point"/> class.
         /// </summary>
         /// <param name="length">The maximum y-value the <see cref="Coordinates">coordinates</see> can take on.</param>
