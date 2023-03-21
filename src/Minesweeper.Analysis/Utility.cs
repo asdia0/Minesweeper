@@ -1,11 +1,7 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-
-namespace Minesweeper.Analysis
+﻿namespace Minesweeper.Analysis
 {
+    using System.Linq;
+
     internal class Utility
     {
         /// <summary>
