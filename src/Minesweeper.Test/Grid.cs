@@ -36,7 +36,7 @@ namespace Minesweeper.Test
             Grid grid = game.Grid;
 
             // Select cell which has one neighbouring mine.
-            Cell cell = grid.Cells.Where(cell => cell.Count == 1).First();
+            Cell cell = grid.Cells.Where(cell => cell.MineCount == 1).First();
 
             // Check then when opened, only one cell is opened.
             grid.OpenCell(cell);
@@ -54,7 +54,7 @@ namespace Minesweeper.Test
             Grid grid = game.Grid;
 
             // Select cell which has no neighbouring mines.
-            Cell cell = grid.Cells.Where(cell => cell.Count == 0).First();
+            Cell cell = grid.Cells.Where(cell => cell.MineCount == 0).First();
 
             // Check then when opened, only a certain number of cells are opened.
             grid.OpenCell(cell);
@@ -104,7 +104,7 @@ namespace Minesweeper.Test
             Grid grid = game.Grid;
 
             // Select a cell which is at least 2 cells away from a mine
-            Cell cell = grid.Cells.Where(cell => cell.Count == 0 && !cell.AdjacentCells.Where(adjCell => adjCell.Count != 0).Any()).First();
+            Cell cell = grid.Cells.Where(cell => cell.MineCount == 0 && !cell.AdjacentCells.Where(adjCell => adjCell.MineCount != 0).Any()).First();
 
             // Flag an adjacent cell
             Cell flag = cell.AdjacentCells[0];

@@ -91,7 +91,7 @@
         /// <summary>
         /// Gets the number of mines in surrounding <see cref="Cell">cells</see>. Returns `null` if the cell itself has a mine.
         /// </summary>
-        public int? Count
+        public int? MineCount
         {
             get
             {

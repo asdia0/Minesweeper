@@ -113,7 +113,7 @@
 
         /// <summary>
         /// Opens a <see cref="Cell">cell</see>.
-        /// If the cell's <see cref="Cell.Count">count</see> is positive, it opens that cell.
+        /// If the cell's <see cref="Cell.MineCount">count</see> is positive, it opens that cell.
         /// If the cell's count is 0, it opens its adjacent cells.
         /// If the cell has a mine, the game ends.
         /// </summary>
@@ -141,7 +141,7 @@
             cell.IsOpen = true;
 
             // Go through the outcomes of each various cases.
-            switch (cell.Count)
+            switch (cell.MineCount)
             {
                 case null:
                     this.Game.State = State.Fail;
@@ -161,13 +161,13 @@
         }
 
         /// <summary>
-        /// Opens a  <see cref="Cell">cell</see> and all adjacent cells if the number of flags surrounding it matches its <see cref="Cell.Count">count</see>.
+        /// Opens a  <see cref="Cell">cell</see> and all adjacent cells if the number of flags surrounding it matches its <see cref="Cell.MineCount">count</see>.
         /// </summary>
         /// <param name="cell">The <see cref="Cell">cell</see> to chord on.</param>
         public void Chord(Cell cell)
         {
             // Only chord on cells with the correct number of flags surrounding it.
-            if (cell.Count == cell.AdjacentCells.Where(cell => cell.HasFlag).Count())
+            if (cell.MineCount == cell.AdjacentCells.Where(cell => cell.HasFlag).Count())
             {
                 // Open cell and its adjacent cells.
                 this.OpenCell(cell);

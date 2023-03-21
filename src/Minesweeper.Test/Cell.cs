@@ -75,8 +75,8 @@
             // Select the cell with the mine.
             Cell cell = grid.Cells.Where(cell => cell.HasMine).First();
 
-            // Check that cell.Count returns null.
-            Assert.IsNull(cell.Count);
+            // Check that cell.MineCount returns null.
+            Assert.IsNull(cell.MineCount);
         }
 
         [TestMethod]
@@ -89,8 +89,8 @@
             // Select a cell without a mine.
             Cell cell = grid.Cells.Where(cell => !cell.HasMine).First();
 
-            // Check that there the cell's count is 2.
-            Assert.AreEqual(2, cell.Count);
+            // Check that there the cell's mine count is 2.
+            Assert.AreEqual(2, cell.MineCount);
         }
 
         [TestMethod]
@@ -112,11 +112,11 @@
             // Check the corner cell in the opposite half of the cell with the mine.
             if (half) // Check cell in bottom half.
             {
-                Assert.AreEqual(0, grid.Cells[0].Count);
+                Assert.AreEqual(0, grid.Cells[0].MineCount);
             }
             else // Check cell in upper half.
             {
-                Assert.AreEqual(0, grid.Cells[99].Count);
+                Assert.AreEqual(0, grid.Cells[99].MineCount);
             }
         }
     }

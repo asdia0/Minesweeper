@@ -16,7 +16,7 @@
         {
             int count = 0;
 
-            List<Cell> cells = grid.Cells.Where(i => i.Count != 0).ToList();
+            List<Cell> cells = grid.Cells.Where(i => i.MineCount != 0).ToList();
 
             List<Cell> searched = new();
 
