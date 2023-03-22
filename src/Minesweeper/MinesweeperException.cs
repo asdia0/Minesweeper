@@ -5,7 +5,7 @@
     /// <summary>
     /// Defines an exception thrown in this project.
     /// </summary>
-    public class MinesweeperException : Exception
+    internal class MinesweeperException : Exception
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="MinesweeperException"/> class.
