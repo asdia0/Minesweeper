@@ -16,13 +16,13 @@
         {
             int count = 0;
 
-            List<Cell> cells = grid.Cells.Where(i => i.MineCount != 0).ToList();
+            List<Cell> searchSpace = grid.Cells.Where(i => i.MineCount != 0).ToList();
 
             List<Cell> searched = new();
 
             List<Cell> toSearch = new();
 
-            while (searched.Count != cells.Count)
+            while (searched.Count != searchSpace.Count)
             {
                 Cell seed = null;
 
@@ -34,11 +34,11 @@
                 {
                     count++;
                     // select another seed
-                    seed = cells.Except(searched).First();
+                    seed = searchSpace.Except(searched).First();
                 }
 
                 // add cells if 1) orthogonally adjacent to seed, 2) in cells, 3) not in searched
-                toSearch.AddRange(seed.OrthogonallyAdjacentCells.Intersect(cells).Except(searched).Except(toSearch).ToList());
+                toSearch.AddRange(seed.OrthogonallyAdjacentCells.Intersect(searchSpace).Except(searched).Except(toSearch).ToList());
                 toSearch.Remove(seed);
                 searched.Add(seed);
             }
