@@ -9,7 +9,7 @@
         /// Counts the number of islands on a <see cref="Grid">grid</see>.
         /// Islands are defined as a group of <see cref="Cell">cells</see> that are numbers or mines that are surrounded by
         ///     openings (cells that are not adjacent to a mine) and the edge of the grid.
-        /// Here, we consider two openings as in the same group if they are
+        /// Here, we consider two cells as in the same group if they are
         ///     <see cref="Cell.OrthogonallyAdjacentCells"> orthogonally adjacent</see> to each other.
         /// </summary>
         /// <param name="grid">The <see cref="Grid">grid</see> to calculate.</param>
