@@ -30,7 +30,7 @@
         {
             get
             {
-                return (this.Length * this.Coordinates.Y) + this.Coordinates.X;
+                return (this.Width * this.Coordinates.Y) + this.Coordinates.X;
             }
         }
 
