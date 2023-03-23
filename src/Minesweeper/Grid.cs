@@ -176,5 +176,22 @@
 
             return;
         }
+
+        public override string ToString()
+        {
+            string res = string.Empty;
+
+            foreach (Cell cell in this.Cells.OrderBy(i => i.Point.ID))
+            {
+                if (cell.Point.ID % this.Length == 0 && cell.Point.ID > 0)
+                {
+                    res += "\n";
+                }
+
+                res += cell.HasMine ? "X" : cell.MineCount;
+            }
+
+            return res;
+        }
     }
 }
