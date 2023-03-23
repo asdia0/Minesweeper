@@ -24,6 +24,17 @@
         public (int X, int Y) Coordinates { get; init; }
 
         /// <summary>
+        /// Gets the unique identifier for the <see cref="Point"/>.
+        /// </summary>
+        public int ID
+        {
+            get
+            {
+                return (this.Length * this.Coordinates.Y) + this.Coordinates.X;
+            }
+        }
+
+        /// <summary>
         /// Gets a list of <see cref="Coordinates">coordinates</see> adjacent to the current <see cref="Point">point</see>. Points diagonal to the current point are considered adjacent.
         /// </summary>
         public List<(int X, int Y)> AdjacentPoints
