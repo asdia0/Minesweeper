@@ -98,7 +98,7 @@
         {
             List<int> sizes = new();
 
-            List<Cell> searchSpace = grid.Cells.Where(i => i.MineCount != 0).ToList();
+            List<Cell> searchSpace = grid.Cells.Where(i => i.MineCount != 0 && !i.HasMine).ToList();
 
             List<Cell> searched = new();
 
@@ -120,7 +120,7 @@
                     // add previous island size to sizes
                     if (searched.Count != 0)
                     {
-                        sizes.Add(size);
+                        sizes.Add(size+1);
                         size = 0;
                     }
 
@@ -133,7 +133,8 @@
                 toSearch.Remove(seed);
                 searched.Add(seed);
             }
-            
+
+            sizes.Add(size + 1);
             return sizes.OrderByDescending(i => i).ToList();
         }
 
