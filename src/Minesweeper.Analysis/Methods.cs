@@ -98,7 +98,7 @@
         {
             List<int> sizes = new();
 
-            List<Cell> searchSpace = grid.Cells.Where(i => i.MineCount != 0 && !i.HasMine).ToList();
+            List<Cell> searchSpace = grid.Cells.Where(i => i.MineCount != 0).ToList();
 
             List<Cell> searched = new();
 
@@ -126,6 +126,12 @@
 
                     // select another seed
                     seed = searchSpace.Except(searched).First();
+                }
+
+                // do not cocunt mines
+                if (seed.HasMine)
+                {
+                    size--;
                 }
 
                 // add cells if 1) orthogonally adjacent to seed, 2) in cells, 3) not in searched
