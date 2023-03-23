@@ -137,5 +137,54 @@
             sizes.Add(size);
             return sizes.OrderByDescending(i => i).ToList();
         }
+
+        /// <summary>
+        /// Comppiles a list of the number of <see cref="Cell">cells</see> in each opening..
+        /// </summary>
+        /// <param name="grid">The <see cref="Grid">grid</see> to calculate.</param>
+        /// <returns>A list of <see cref="System.Int32">integers</see>, sorted in decreasing order.</returns>
+        public static List<int> OpeningSizes(Grid grid)
+        {
+            List<int> sizes = new();
+
+            List<Cell> searchSpace = grid.Cells.Where(i => i.MineCount == 0).ToList();
+
+            List<Cell> searched = new();
+
+            List<Cell> toSearch = new();
+
+            int size = 0;
+
+            while (searched.Count < searchSpace.Count)
+            {
+                Cell seed = null;
+
+                if (toSearch.Any())
+                {
+                    size++;
+                    seed = toSearch.First();
+                }
+                else
+                {
+                    // add previous island size to sizes
+                    if (searched.Count != 0)
+                    {
+                        sizes.Add(size + 1);
+                        size = 0;
+                    }
+
+                    // select another seed
+                    seed = searchSpace.Except(searched).First();
+                }
+
+                // add cells if 1) adjacent to seed, 2) in cells, 3) not in searched
+                toSearch.AddRange(seed.AdjacentCells.Intersect(searchSpace).Except(searched).Except(toSearch).ToList());
+                toSearch.Remove(seed);
+                searched.Add(seed);
+            }
+
+            sizes.Add(size + 1);
+            return sizes.OrderByDescending(i => i).ToList();
+        }
     }
 }
