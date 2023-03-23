@@ -89,6 +89,11 @@
             return count;
         }
 
+        /// <summary>
+        /// Comppiles a list of the number of <see cref="Cell">cells</see> in each island.
+        /// </summary>
+        /// <param name="grid">The <see cref="Grid">grid</see> to calculate.</param>
+        /// <returns>A list of <see cref="System.Int32">integers</see>, sorted in decreasing order.</returns>
         public static List<int> IslandSizes(Grid grid)
         {
             List<int> sizes = new();
