@@ -34,6 +34,14 @@
         /// </summary>
         public List<Cell> Cells { get; init; }
 
+        public int BBBV
+        {
+            get
+            {
+                return this.Cells.Where(i => i.MineCount > 0 && !i.AdjacentCells.Where(i => i.MineCount == 0).Any()).Count();
+            }
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="Grid"/> class.
         /// </summary>
