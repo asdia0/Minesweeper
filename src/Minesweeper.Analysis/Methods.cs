@@ -88,5 +88,49 @@
 
             return count;
         }
+
+        public static List<int> IslandSize(Grid grid)
+        {
+            List<int> sizes = new();
+
+            List<Cell> searchSpace = grid.Cells.Where(i => i.MineCount != 0).ToList();
+
+            List<Cell> searched = new();
+
+            List<Cell> toSearch = new();
+
+            int size = 0;
+
+            while (searched.Count < searchSpace.Count)
+            {
+                Cell seed = null;
+
+                if (toSearch.Any())
+                {
+                    size++;
+                    seed = toSearch.First();
+                }
+                else
+                {
+                    // add previous island size to sizes
+                    if (searched.Count != 0)
+                    {
+                        sizes.Add(size);
+                        size = 0;
+                    }
+
+                    // select another seed
+                    seed = searchSpace.Except(searched).First();
+                }
+
+                // add cells if 1) orthogonally adjacent to seed, 2) in cells, 3) not in searched
+                toSearch.AddRange(seed.OrthogonallyAdjacentCells.Intersect(searchSpace).Except(searched).Except(toSearch).ToList());
+                toSearch.Remove(seed);
+                searched.Add(seed);
+            }
+
+            sizes.Add(size);
+            return sizes.OrderByDescending(i => i).ToList();
+        }
     }
 }
