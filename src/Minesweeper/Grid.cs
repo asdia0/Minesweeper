@@ -177,6 +177,12 @@
             return;
         }
 
+        /// <summary>
+        /// Represents the <see cref="Grid">grid</see> as a <see cref="string"/>.
+        /// <see cref="Cell">Cells</see> that are mines are represented by "X"s,
+        ///     while other are represented by their <see cref="Cell.MineCount">mine count</see>.
+        /// </summary>
+        /// <returns>A <see cref="string"/> representation of the <see cref="Grid">grid</see>.</returns>
         public override string ToString()
         {
             string res = string.Empty;
