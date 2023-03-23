@@ -133,8 +133,7 @@
                 toSearch.Remove(seed);
                 searched.Add(seed);
             }
-
-            sizes.Add(size);
+            
             return sizes.OrderByDescending(i => i).ToList();
         }
 
