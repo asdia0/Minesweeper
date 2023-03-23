@@ -89,7 +89,7 @@
             return count;
         }
 
-        public static List<int> IslandSize(Grid grid)
+        public static List<int> IslandSizes(Grid grid)
         {
             List<int> sizes = new();
 
