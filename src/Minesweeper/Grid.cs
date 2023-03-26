@@ -10,11 +10,6 @@
     public class Grid
     {
         /// <summary>
-        /// Gets the <see cref="Game"/> the grid is in.
-        /// </summary>
-        public Game Game { get; init; }
-
-        /// <summary>
         /// Gets the length (y-axis) of the <see cref="Grid">grid </see> measured in <see cref="Cell">cells</see>.
         /// </summary>
         public int Length { get; init; }
@@ -197,7 +192,6 @@
             Utility.CheckGridParams(length, width, mines);
 
             // Assign properties.
-            this.Game = null;
             this.Length = length;
             this.Width = width;
             this.Mines = mines;
