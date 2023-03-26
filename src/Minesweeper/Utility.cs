@@ -52,7 +52,7 @@
 
         /// <summary>
         /// Converts mine density to mines.
-        /// Mind density must be between 0 and 1 inclusive.
+        /// Mine density must be strictly between 0 and 1.
         /// </summary>
         /// <param name="length">The length of the <see cref="Grid">grid</see>.</param>
         /// <param name="width">The width of the <see cref="Grid">grid</see>.</param>
@@ -62,7 +62,7 @@
         /// <exception cref="System.Exception">Throws an exception if the density is not strictly between 0 and 1.</exception>
         public static int DensityToMines(int length, int width, double density)
         {
-            if (density > 1 || density < 0)
+            if (density >= 1 || density <= 0)
             {
                 throw new System.Exception("Invalid density.");
             }
