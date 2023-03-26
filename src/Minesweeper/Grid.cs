@@ -59,7 +59,7 @@
         {
             get
             {
-                return this.IslandSizes.Count();
+                return this.IslandSizes.Count;
             }
         }
 
@@ -73,7 +73,7 @@
         {
             get
             {
-                return this.OpeningSizes.Count();
+                return this.OpeningSizes.Count;
             }
         }
 
