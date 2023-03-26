@@ -111,10 +111,12 @@
                 this.State = Minesweeper.State.Ongoing;
                 this.Start = DateTime.Now;
 
-                // First click cannot be a mine.
+                // If the first click has a mine, switch it with another cell.
                 if (cell.HasMine)
                 {
                     cell.HasMine = false;
+
+                    this.Grid.Cells.Where(i => !i.HasMine).First().HasMine = true;
                 }
             }
 
