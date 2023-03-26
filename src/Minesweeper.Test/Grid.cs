@@ -39,7 +39,7 @@ namespace Minesweeper.Test
             Cell cell = grid.Cells.Where(cell => cell.MineCount == 1).First();
 
             // Check then when opened, only one cell is opened.
-            grid.OpenCell(cell);
+            game.OpenCell(cell);
             Assert.AreEqual(1, grid.Cells.Where(cell => cell.IsOpen).Count());
 
             // Check that the game has started.
@@ -57,7 +57,7 @@ namespace Minesweeper.Test
             Cell cell = grid.Cells.Where(cell => cell.MineCount == 0).First();
 
             // Check then when opened, only a certain number of cells are opened.
-            grid.OpenCell(cell);
+            game.OpenCell(cell);
 
             // List all the possible numbers of opened cells.
             List<int> possibilities = new()
@@ -89,7 +89,7 @@ namespace Minesweeper.Test
             Cell cell = grid.Cells.Where(cell => cell.HasMine).First();
 
             // Check then when opened, only one cell is opened.
-            grid.OpenCell(cell);
+            game.OpenCell(cell);
             Assert.AreEqual(1, grid.Cells.Where(cell => cell.IsOpen).Count());
 
             // Check that the game has ended.
@@ -111,7 +111,7 @@ namespace Minesweeper.Test
             flag.HasFlag = true;
 
             // Check then when opened, only a certain number of cells are opened.
-            grid.OpenCell(cell);
+            game.OpenCell(cell);
 
             // List all the possible numbers of opened cells.
             // Same possibilities as OpenCell_ZeroCount, but with 1 less cell.
@@ -150,7 +150,7 @@ namespace Minesweeper.Test
             grid.Cells.Where(cell => !cell.HasMine).First().HasFlag = true;
 
             // Chord a separate cell.
-            grid.Chord(grid.Cells.Where(cell => !cell.HasMine).Last());
+            game.Chord(grid.Cells.Where(cell => !cell.HasMine).Last());
 
             // Check that no cells are opened.
             Assert.AreEqual(0, grid.Cells.Where(cell => cell.IsOpen).Count());
@@ -167,7 +167,7 @@ namespace Minesweeper.Test
             grid.Cells.Where(cell => cell.HasMine).First().HasFlag = true;
 
             // Chord a separate cell.
-            grid.Chord(grid.Cells.Where(cell => !cell.HasMine).First());
+            game.Chord(grid.Cells.Where(cell => !cell.HasMine).First());
 
             // Check that all cells are opened and the game has ended.
             Assert.AreEqual(3, grid.Cells.Where(cell => cell.IsOpen).Count());
