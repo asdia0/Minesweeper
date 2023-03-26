@@ -23,9 +23,10 @@
         public Point Point { get; init; }
 
         /// <summary>
-        /// Gets a value indicating whether the <see cref="Cell">cell</see> has a mine.
+        /// Gets or sets a value indicating whether the <see cref="Cell">cell</see> has a mine.
+        /// The value should only be changed when called by <see cref="Game.OpenCell(Cell)"/> to prevent first-click blasts.
         /// </summary>
-        public bool HasMine { get; init; }
+        public bool HasMine { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the <see cref="Cell">cell</see> has been opened by the player. Not reversible.
