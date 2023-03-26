@@ -25,6 +25,17 @@
         public int Mines { get; init; }
 
         /// <summary>
+        /// Gets the <see cref="Mines">mine</see> density of the <see cref="Grid">grid</see>.
+        /// </summary>
+        public double MineDensity
+        {
+            get
+            {
+                return (double)this.Mines / (this.Length * this.Width);
+            }
+        }
+
+        /// <summary>
         /// Gets the <see cref="Cell">cells</see> on the <see cref="Grid">grid</see>.
         /// </summary>
         public List<Cell> Cells { get; init; }
@@ -32,7 +43,7 @@
         /// <summary>
         /// Gets the 3BV of the grid.
         /// 3BV, or Bechtel's Board Benchmark Value, is the minimum number of left clicks required to clear a board.
-        /// 3BV = <see cref="OpeningCount(Grid)">number of openings</see> + all numbers that are "landlocked".
+        /// 3BV = <see cref="OpeningCount">number of openings</see> + all numbers that are "landlocked".
         /// </summary>
         public int BBBV
         {
