@@ -173,5 +173,13 @@ namespace Minesweeper.Test
             Assert.AreEqual(3, grid.Cells.Where(cell => cell.IsOpen).Count());
             Assert.AreEqual(State.Success, game.State);
         }
+
+        [TestMethod]
+        public void SizesSum()
+        {
+            Grid g = new(10, 10, 10);
+
+            Assert.AreEqual(90, g.IslandSizes.Sum() + g.OpeningSizes.Sum());
+        }
     }
 }
