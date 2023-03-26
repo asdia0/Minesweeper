@@ -1,6 +1,8 @@
 ﻿namespace Minesweeper
 {
     using System;
+    using System.Collections.Generic;
+    using System.Linq;
 
     /// <summary>
     /// Represents a game of minesweeper.
@@ -82,6 +84,78 @@
         public Game(Grid grid)
         {
             this.Grid = grid;
+        }
+
+        /// <summary>
+        /// Opens a <see cref="Cell">cell</see>.
+        /// If the cell's <see cref="Cell.MineCount">count</see> is positive, it opens that cell.
+        /// If the cell's count is 0, it opens its adjacent cells.
+        /// If the cell has a mine, the game ends.
+        /// </summary>
+        /// <param name="cell">The <see cref="Cell">cell</see> to open.</param>
+        public void OpenCell(Cell cell)
+        {
+            // Skip cell if
+            // 1. game has ended
+            // 2. cell is in incorrect grid
+            // 3. cell has already been opened
+            // 4. cell is flagged.
+            if (this.End != null || cell.Grid != this.Grid || cell.IsOpen || cell.HasFlag)
+            {
+                return;
+            }
+
+            // Check if this is the first cell being opened.
+            if (this.State == null)
+            {
+                this.State = Minesweeper.State.Ongoing;
+                this.Start = DateTime.Now;
+
+                // First click cannot be a mine.
+                if (cell.HasMine)
+                {
+                    cell.HasMine = false;
+                }
+            }
+
+            // Open cell.
+            cell.IsOpen = true;
+
+            // Go through the outcomes of each various cases.
+            switch (cell.MineCount)
+            {
+                case null:
+                    this.State = Minesweeper.State.Fail;
+                    return;
+                case 0:
+                    List<Cell> adjacentCells = cell.AdjacentCells;
+                    adjacentCells.ForEach(cell => this.OpenCell(cell));
+                    break;
+            }
+
+            // Mark game as won if all cells without mines have been opened.
+            if (!this.Grid.Cells.Where(cell => !cell.HasMine && !cell.IsOpen).Any())
+            {
+                this.State = Minesweeper.State.Success;
+                this.End = DateTime.Now;
+            }
+        }
+
+        /// <summary>
+        /// Opens a  <see cref="Cell">cell</see> and all adjacent cells if the number of flags surrounding it matches its <see cref="Cell.MineCount">count</see>.
+        /// </summary>
+        /// <param name="cell">The <see cref="Cell">cell</see> to chord on.</param>
+        public void Chord(Cell cell)
+        {
+            // Only chord on cells with the correct number of flags surrounding it.
+            if (cell.MineCount == cell.AdjacentCells.Where(cell => cell.HasFlag).Count())
+            {
+                // Open cell and its adjacent cells.
+                this.OpenCell(cell);
+                cell.AdjacentCells.ForEach(adjCell => this.OpenCell(adjCell));
+            }
+
+            return;
         }
     }
 }
