@@ -59,37 +59,7 @@
         {
             get
             {
-                int count = 0;
-
-                List<Cell> searchSpace = this.Cells.Where(i => i.MineCount != 0).ToList();
-
-                List<Cell> searched = new();
-
-                List<Cell> toSearch = new();
-
-                while (searched.Count != searchSpace.Count)
-                {
-                    Cell seed = null;
-
-                    if (toSearch.Any())
-                    {
-                        seed = toSearch.First();
-                    }
-                    else
-                    {
-                        count++;
-
-                        // select another seed
-                        seed = searchSpace.Except(searched).First();
-                    }
-
-                    // add cells if 1) orthogonally adjacent to seed, 2) in cells, 3) not in searched
-                    toSearch.AddRange(seed.OrthogonallyAdjacentCells.Intersect(searchSpace).Except(searched).Except(toSearch).ToList());
-                    toSearch.Remove(seed);
-                    searched.Add(seed);
-                }
-
-                return count;
+                return this.IslandSizes.Count();
             }
         }
 
@@ -103,37 +73,7 @@
         {
             get
             {
-                int count = 0;
-
-                List<Cell> searchSpace = this.Cells.Where(i => i.MineCount == 0).ToList();
-
-                List<Cell> searched = new();
-
-                List<Cell> toSearch = new();
-
-                while (searched.Count != searchSpace.Count)
-                {
-                    Cell seed = null;
-
-                    if (toSearch.Any())
-                    {
-                        seed = toSearch.First();
-                    }
-                    else
-                    {
-                        count++;
-
-                        // select another seed
-                        seed = searchSpace.Except(searched).First();
-                    }
-
-                    // add cells if 1) adjacent to seed, 2) in cells, 3) not in searched
-                    toSearch.AddRange(seed.AdjacentCells.Intersect(searchSpace).Except(searched).Except(toSearch).ToList());
-                    toSearch.Remove(seed);
-                    searched.Add(seed);
-                }
-
-                return count;
+                return this.OpeningSizes.Count();
             }
         }
 
