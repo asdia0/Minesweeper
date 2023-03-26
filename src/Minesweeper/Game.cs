@@ -72,7 +72,7 @@
             // Catch invalid parameters.
             Utility.CheckGridParams(length, width, mines);
 
-            this.Grid = new(this, length, width, mines);
+            this.Grid = new(length, width, mines);
         }
 
         /// <summary>

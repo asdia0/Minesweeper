@@ -224,45 +224,6 @@
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Grid"/> class.
-        /// </summary>
-        /// <param name="game">The game the <see cref="Grid">grid</see> is in.</param>
-        /// <param name="length">The length (y-axis) of the <see cref="Grid">grid </see> measured in <see cref="Cell">cells</see>.</param>
-        /// <param name="width">The width (x-axis) of the <see cref="Grid">grid </see> measured in <see cref="Cell">cells</see>.</param>
-        /// <param name="mines">The number of mines on the <see cref="Grid">grid</see>.</param>
-        public Grid(Game game, int length, int width, int mines)
-        {
-            // Catch invalid parameters.
-            Utility.CheckGridParams(length, width, mines);
-
-            // Assign properties.
-            this.Game = game;
-            this.Length = length;
-            this.Width = width;
-            this.Mines = mines;
-            this.Cells = new();
-
-            // Randomly generate mines.
-            bool[] minesArray = new bool[this.Length * this.Width];
-            Random rand = new();
-            while (mines > 0)
-            {
-                int randInt = rand.Next(this.Length * this.Width);
-                if (!minesArray[randInt])
-                {
-                    minesArray[randInt] = true;
-                    mines--;
-                }
-            }
-
-            // Create cells.
-            for (int index = 0; index < this.Length * this.Width; index++)
-            {
-                this.Cells.Add(new(this, new(length, width, Utility.CellIndexToCoordinates(index, this.Width)), minesArray[index]));
-            }
-        }
-
-        /// <summary>
         /// Opens a <see cref="Cell">cell</see>.
         /// If the cell's <see cref="Cell.MineCount">count</see> is positive, it opens that cell.
         /// If the cell's count is 0, it opens its adjacent cells.
