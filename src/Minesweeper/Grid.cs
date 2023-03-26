@@ -49,7 +49,7 @@
         {
             get
             {
-                return this.Cells.Where(i => i.MineCount > 0 && !i.AdjacentCells.Where(i => i.MineCount == 0).Any()).Count();
+                return this.Cells.Where(i => i.MineCount > 0 && !i.AdjacentCells.Where(i => i.MineCount == 0).Any()).Count() + this.OpeningCount;
             }
         }
 
