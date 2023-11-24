@@ -2,6 +2,9 @@
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
+using Microsoft.Z3;
+using System.ComponentModel;
+using System;
 
 namespace Minesweeper.Solver
 {
@@ -76,8 +79,82 @@ namespace Minesweeper.Solver
             return previousWinRate;
         }
 
-        public static int Solve(Grid grid)
+        public static int Solve(Grid grid1)
         {
+            // Set up system of boolean equations
+            // Only consider non-landlocked cells so as to reduce computation
+            // Can do this by iterating through number of mines m and trying to find solutions
+            // Get guaranteed solutions at the end
+
+
+            //for (int m = 1; m <= connectedCells.Count(); m++)
+            for (int m = 1; m <= 1; m++)
+            {
+                Grid grid = new(3, 3, 2);
+
+                grid.OpenCell(grid.SafeCells.FirstOrDefault());
+
+                List<Cell> knownCells = grid.OpenedCells.Union(grid.FlaggedCells).ToList();
+                List<Cell> connectedCells = grid.Cells.Where(cell => !knownCells.Contains(cell) && cell.AdjacentCells.Intersect(knownCells).Any()).ToList();
+                List<Cell> relevantKnownCells = knownCells.Where(cell => cell.AdjacentCells.Intersect(connectedCells).Any()).ToList();
+
+                using (Context ctx = new())
+                {
+                    IntExpr fakeTrue = ctx.MkInt(1);
+                    IntExpr fakeFalse = ctx.MkInt(0);
+
+                    Microsoft.Z3.Solver solver = ctx.MkSolver();
+
+                    Dictionary<Cell, IntExpr> expressions = new();
+
+                    // Initialize variables
+                    foreach (Cell cell in connectedCells.Union(relevantKnownCells))
+                    {
+                        int id = cell.Point.ID;
+                        IntExpr expr = ctx.MkIntConst($"c_{id}");
+                        expressions.Add(cell, expr);
+
+                        // Make sure each expressions are "boolean"
+                        solver.Assert(ctx.MkOr(ctx.MkEq(expr, fakeTrue), ctx.MkEq(expr, fakeFalse)));
+                    }
+
+                    // Set known values 
+                    foreach (Cell cell in relevantKnownCells)
+                    {
+                        if (cell.HasFlag)
+                        {
+                            solver.Assert(ctx.MkEq(expressions[cell], fakeTrue));
+                        }
+
+                        else if (cell.IsOpen)
+                        {
+                            solver.Assert(ctx.MkEq(expressions[cell], fakeFalse));
+                        }
+                    }
+
+                    // Set up mine count
+                    foreach (Cell cell in relevantKnownCells)
+                    {
+                        if (cell.HasFlag)
+                        {
+                            break;
+                        }
+
+                        int mineCount = (int)cell.MineCount - grid.FlaggedCells.Where(i => !relevantKnownCells.Contains(i) && i.AdjacentCells.Contains(cell)).Count();
+
+                        List<IntExpr> adjacentCells = cell.AdjacentCells.Intersect(relevantKnownCells.Union(connectedCells)).Select(i => expressions[i]).ToList();
+
+                        solver.Assert(ctx.MkEq(ctx.MkAdd(adjacentCells), ctx.MkInt(mineCount)));
+                    }
+
+                    // Sum of mines
+
+                    solver.Assert(ctx.MkEq(ctx.MkAdd(expressions.Values), ctx.MkInt(m)));
+
+                    Console.WriteLine(solver.Check());
+                    Console.WriteLine(solver.Model);
+                }
+            }
 
             return 0;
         }
