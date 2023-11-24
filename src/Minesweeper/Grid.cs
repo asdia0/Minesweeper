@@ -63,9 +63,15 @@
         }
 
         /// <summary>
-        /// Gets the <see cref="State">state</see> of the grid.
+        /// Gets a list of all <see cref="Cell">cells</see> with <see cref="Cell.HasMine">mines</see> that have been flagged.
         /// </summary>
-        public State State { get; init; }
+        public List<Cell> KnownMinedCells
+        {
+            get
+            {
+                return this.MinedCells.Where(cell => cell.HasFlag).ToList();
+            }
+        }
 
         /// <summary>
         /// Gets the 3BV of the grid.
