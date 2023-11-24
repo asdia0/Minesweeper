@@ -19,5 +19,10 @@
         /// The <see cref="Game">game</see> is still ongoing.
         /// </summary>
         Ongoing,
+
+        /// <summary>
+        /// The <see cref="Game">game</see> is yet to start.
+        /// </summary>
+        ToBegin,
     }
 }
