@@ -152,6 +152,47 @@
         }
 
         /// <summary>
+        /// Opens a <see cref="Cell">cell</see>.
+        /// If the cell's <see cref="Cell.MineCount">count</see> is positive, it opens that cell.
+        /// If the cell's count is 0, it opens its adjacent cells.
+        /// If the cell has a mine, the game ends.
+        /// </summary>
+        /// <param name="cell">The <see cref="Cell">cell</see> to open.</param>
+        public void OpenCell(Cell cell)
+        {
+            // Skip cell if
+            // 1. game has ended
+            // 2. cell is in incorrect grid
+            // 3. cell has already been opened
+            // 4. cell is flagged.
+            if (this.State != Minesweeper.State.Ongoing || cell.Grid != this.Grid || cell.IsOpen || cell.HasFlag)
+            {
+                return;
+            }
+
+            // Check if this is the first cell being opened.
+            if (this.State == State.ToBegin)
+            {
+                // If the first click has a mine, switch it with another cell.
+                if (cell.HasMine)
+                {
+                    cell.HasMine = false;
+
+                    this.Cells.Where(i => !i.HasMine).First().HasMine = true;
+                }
+            }
+
+            // Open cell.
+            cell.IsOpen = true;
+
+            // Open all adjacent cells if clicked cell is an opening.
+            if (cell.MineCount == 0)
+            {
+                cell.AdjacentCells.ForEach(cell => this.OpenCell(cell));
+            }
+        }
+
+        /// <summary>
         /// Represents the <see cref="Grid">grid</see> as a <see cref="string"/>.
         /// <see cref="Cell">Cells</see> that are mines are represented by "X"s,
         ///     while other are represented by their <see cref="Cell.MineCount">mine count</see>.

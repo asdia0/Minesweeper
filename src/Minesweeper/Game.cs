@@ -44,60 +44,7 @@
             this.State = State.ToBegin;
         }
 
-        /// <summary>
-        /// Opens a <see cref="Cell">cell</see>.
-        /// If the cell's <see cref="Cell.MineCount">count</see> is positive, it opens that cell.
-        /// If the cell's count is 0, it opens its adjacent cells.
-        /// If the cell has a mine, the game ends.
-        /// </summary>
-        /// <param name="cell">The <see cref="Cell">cell</see> to open.</param>
-        public void OpenCell(Cell cell)
-        {
-            // Skip cell if
-            // 1. game has ended
-            // 2. cell is in incorrect grid
-            // 3. cell has already been opened
-            // 4. cell is flagged.
-            if (this.State != Minesweeper.State.Ongoing || cell.Grid != this.Grid || cell.IsOpen || cell.HasFlag)
-            {
-                return;
-            }
 
-            // Check if this is the first cell being opened.
-            if (this.State == State.ToBegin)
-            {
-                this.State = Minesweeper.State.Ongoing;
-
-                // If the first click has a mine, switch it with another cell.
-                if (cell.HasMine)
-                {
-                    cell.HasMine = false;
-
-                    this.Grid.Cells.Where(i => !i.HasMine).First().HasMine = true;
-                }
-            }
-
-            // Open cell.
-            cell.IsOpen = true;
-
-            // Go through the outcomes of each various cases.
-            switch (cell.MineCount)
-            {
-                case null:
-                    this.State = Minesweeper.State.Fail;
-                    return;
-                case 0:
-                    List<Cell> adjacentCells = cell.AdjacentCells;
-                    adjacentCells.ForEach(cell => this.OpenCell(cell));
-                    break;
-            }
-
-            // Mark game as won if all cells without mines have been opened.
-            if (!this.Grid.Cells.Where(cell => !cell.HasMine && !cell.IsOpen).Any())
-            {
-                this.State = Minesweeper.State.Success;
-            }
-        }
 
         /// <summary>
         /// Opens a  <see cref="Cell">cell</see> and all adjacent cells if the number of flags surrounding it matches its <see cref="Cell.MineCount">count</see>.
