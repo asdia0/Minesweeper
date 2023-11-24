@@ -85,19 +85,6 @@
         }
 
         /// <summary>
-        /// Gets the 3BV of the grid.
-        /// 3BV, or Bechtel's Board Benchmark Value, is the minimum number of left clicks required to clear a board.
-        /// 3BV = <see cref="OpeningCount">number of openings</see> + all numbers that are "landlocked".
-        /// </summary>
-        public int BBBV
-        {
-            get
-            {
-                return this.Cells.Where(i => i.MineCount > 0 && !i.AdjacentCells.Where(i => i.MineCount == 0).Any()).Count() + this.OpeningCount;
-            }
-        }
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="Grid"/> class.
         /// </summary>
         /// <param name="length">The length (y-axis) of the <see cref="Grid">grid </see> measured in <see cref="Cell">cells</see>.</param>
