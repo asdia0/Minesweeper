@@ -92,24 +92,6 @@
         }
 
         /// <summary>
-        /// Gets a list of <see cref="Cell">cells</see> that are orthogonally adjacent to the current cell. Cells diagonal to the current cell are considered adjacent.
-        /// </summary>
-        public List<Cell> OrthogonallyAdjacentCells
-        {
-            get
-            {
-                // Get a list of the coordinates of orthogonally adjacent cells.
-                List<(int x, int y)> points = this.Point.OrthogonallyAdjacentPoints;
-
-                // Convert the coordinates to indexes.
-                List<int> ids = points.Select(coor => Utility.CellCoordinatesToIndex(coor, this.Grid.Width)).ToList();
-
-                // Return the list of cells with the mapped indexes.
-                return ids.Select(cell => this.Grid.Cells[cell]).ToList();
-            }
-        }
-
-        /// <summary>
         /// Gets the number of mines in surrounding <see cref="Cell">cells</see>. Returns `null` if the cell itself has a mine.
         /// </summary>
         public int? MineCount
