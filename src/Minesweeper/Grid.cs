@@ -199,19 +199,19 @@
         /// <returns>A <see cref="string"/> representation of the <see cref="Grid">grid</see>.</returns>
         public override string ToString()
         {
-            string res = string.Empty;
+            string str = string.Empty;
 
             foreach (Cell cell in this.Cells.OrderBy(i => i.Point.ID))
             {
                 if (cell.Point.ID % this.Length == 0 && cell.Point.ID > 0)
                 {
-                    res += "\n";
+                    str += "\n";
                 }
 
-                res += cell.HasMine ? "X" : cell.MineCount;
+                str += cell.HasMine ? "X" : cell.MineCount;
             }
 
-            return res;
+            return str;
         }
     }
 }
