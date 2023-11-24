@@ -74,6 +74,17 @@
         }
 
         /// <summary>
+        /// Gets a list of all <see cref="Cell">cells</see> that are open.
+        /// </summary>
+        public List<Cell> KnownSafeCells
+        {
+            get
+            {
+                return this.Cells.Where(cell => cell.IsOpen).ToList();
+            }
+        }
+
+        /// <summary>
         /// Gets the 3BV of the grid.
         /// 3BV, or Bechtel's Board Benchmark Value, is the minimum number of left clicks required to clear a board.
         /// 3BV = <see cref="OpeningCount">number of openings</see> + all numbers that are "landlocked".
