@@ -9,10 +9,6 @@
     /// </summary>
     public class Game
     {
-        private DateTime? end = null;
-
-        private DateTime? start = null;
-
         /// <summary>
         /// Gets the <see cref="Grid">grid</see> the <see cref="Game">game</see> is played on.
         /// </summary>
@@ -22,46 +18,6 @@
         /// Gets or sets the current <see cref="Game">game</see> <see cref="State">state</see>. Return `null` if the game has not started (no <see cref="Cell">cells</see> have been opened).
         /// </summary>
         public State? State { get; set; } = null;
-
-        /// <summary>
-        /// Gets or sets the time at which the game started (A <see cref="Cell">cell</see> has been opened).
-        /// Returns `null` if the game has not started.
-        /// </summary>
-        public DateTime? Start
-        {
-            get
-            {
-                return this.start;
-            }
-
-            set
-            {
-                if (this.start == null)
-                {
-                    this.start = value;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets the time at which the <see cref="Game">game</see> ended (<see cref="State"/> changed to <see cref="State.Success"/> or <see cref="State.Fail"/>).
-        /// Returns `null` if the game is still <see cref="State.Ongoing">ongoing</see>.
-        /// </summary>
-        public DateTime? End
-        {
-            get
-            {
-                return this.end;
-            }
-
-            set
-            {
-                if (this.end == null)
-                {
-                    this.end = value;
-                }
-            }
-        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Game"/> class.
@@ -100,7 +56,7 @@
             // 2. cell is in incorrect grid
             // 3. cell has already been opened
             // 4. cell is flagged.
-            if (this.End != null || cell.Grid != this.Grid || cell.IsOpen || cell.HasFlag)
+            if (this.State != Minesweeper.State.Ongoing || cell.Grid != this.Grid || cell.IsOpen || cell.HasFlag)
             {
                 return;
             }
@@ -109,7 +65,6 @@
             if (this.State == null)
             {
                 this.State = Minesweeper.State.Ongoing;
-                this.Start = DateTime.Now;
 
                 // If the first click has a mine, switch it with another cell.
                 if (cell.HasMine)
@@ -139,7 +94,6 @@
             if (!this.Grid.Cells.Where(cell => !cell.HasMine && !cell.IsOpen).Any())
             {
                 this.State = Minesweeper.State.Success;
-                this.End = DateTime.Now;
             }
         }
 
