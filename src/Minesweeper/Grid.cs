@@ -177,7 +177,7 @@
                 {
                     cell.HasMine = false;
 
-                    this.Cells.Where(i => !i.HasMine).First().HasMine = true;
+                    this.SafeCells.First().HasMine = true;
                 }
             }
 
