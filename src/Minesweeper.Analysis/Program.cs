@@ -49,7 +49,7 @@ namespace Minesweeper.Solver
                 }
             }
 
-            return winRates.ToList();
+            return winRates;
         }
 
         public static double GetWinRate(Grid grid)
