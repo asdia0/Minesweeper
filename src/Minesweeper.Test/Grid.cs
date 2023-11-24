@@ -11,7 +11,7 @@ namespace Minesweeper.Test
         public void Grid()
         {
             // Create a grid.
-            Grid grid = new(5, 6, 1);
+            Grid grid = new(5, 6, 7);
 
             // Check the dimensions of the grid.
             Assert.AreEqual(5, grid.Length);
@@ -24,7 +24,7 @@ namespace Minesweeper.Test
             Assert.AreEqual(7, grid.Cells.Where(cell => cell.HasMine).Count());
 
             // Check that the game has not yet started.
-            Assert.IsNull(grid.State);
+            Assert.AreEqual(State.ToBegin, grid.State);
         }
 
         [TestMethod]
