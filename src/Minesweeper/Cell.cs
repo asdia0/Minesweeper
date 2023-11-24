@@ -12,6 +12,10 @@
 
         private bool isOpenSet = false;
 
+        private bool hasMine = false;
+
+        private bool hasMineSet = false;
+
         /// <summary>
         /// Gets the <see cref="Grid">grid</see> the <see cref="Cell">cell</see> is on.
         /// </summary>
@@ -24,9 +28,25 @@
 
         /// <summary>
         /// Gets or sets a value indicating whether the <see cref="Cell">cell</see> has a mine.
-        /// The value should only be changed when called by <see cref="Game.OpenCell(Cell)"/> to prevent first-click blasts.
+        /// The value cannot be changed once the game has started.
         /// </summary>
-        public bool HasMine { get; set; }
+        public bool HasMine
+        {
+            get
+            {
+                return this.hasMine;
+            }
+
+            set
+            {
+                // Allow for change only if the game has not started.
+                if (!this.hasMineSet || this.Grid.State == State.ToBegin)
+                {
+                    this.hasMine = value;
+                    this.hasMineSet = true;
+                }
+            }
+        }
 
         /// <summary>
         /// Gets or sets a value indicating whether the <see cref="Cell">cell</see> has been opened by the player. Not reversible.
