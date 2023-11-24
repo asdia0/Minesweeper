@@ -1,7 +1,7 @@
 ﻿namespace Minesweeper
 {
     /// <summary>
-    /// Represents a <see cref="Game">game</see> state.
+    /// Represents a <see cref="Grid">grid</see> state.
     /// </summary>
     public enum State
     {
