@@ -184,6 +184,12 @@
             // Open cell.
             cell.IsOpen = true;
 
+            // End if a mine has been opened.
+            if (cell.HasMine)
+            {
+                return;
+            }
+
             // Open all adjacent cells if clicked cell is an opening.
             if (cell.MineCount == 0)
             {
