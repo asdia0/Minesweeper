@@ -11,7 +11,7 @@ namespace Minesweeper.Test
         public void Grid()
         {
             // Create a grid.
-            Grid grid = new(5, 5, 1);
+            Grid grid = new(5, 6, 1);
 
             // Check the dimensions of the grid.
             Assert.AreEqual(5, grid.Length);
