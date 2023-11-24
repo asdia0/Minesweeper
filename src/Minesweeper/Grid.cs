@@ -63,9 +63,9 @@
         }
 
         /// <summary>
-        /// Gets a list of all <see cref="Cell">cells</see> that have been flagged; they are assumed to be mined.
+        /// Gets a list of all <see cref="Cell">cells</see> that have been flagged.
         /// </summary>
-        public List<Cell> KnownMinedCells
+        public List<Cell> FlaggedCells
         {
             get
             {
@@ -74,9 +74,9 @@
         }
 
         /// <summary>
-        /// Gets a list of all <see cref="Cell">cells</see> that are open; they are known to be safe.
+        /// Gets a list of all <see cref="Cell">cells</see> that are open.
         /// </summary>
-        public List<Cell> KnownSafeCells
+        public List<Cell> OpenedCells
         {
             get
             {
@@ -92,19 +92,19 @@
             get
             {
                 // Game is yet to begin; no action has been committed.
-                if (!this.KnownMinedCells.Union(this.KnownSafeCells).Any())
+                if (!this.FlaggedCells.Union(this.OpenedCells).Any())
                 {
                     return State.ToBegin;
                 }
 
                 // Game lost; a miend cell has been opened.
-                if (this.KnownSafeCells.Where(cell => cell.HasMine).Any())
+                if (this.OpenedCells.Where(cell => cell.HasMine).Any())
                 {
                     return State.Fail;
                 }
 
                 // Game won; all safe cells have been opened.
-                if (this.SafeCells.All(this.KnownSafeCells.Contains) && this.SafeCells.Count == this.KnownSafeCells.Count)
+                if (this.SafeCells.All(this.OpenedCells.Contains) && this.SafeCells.Count == this.OpenedCells.Count)
                 {
                     return State.Success;
                 }
