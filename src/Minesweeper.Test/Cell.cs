@@ -63,7 +63,7 @@
         }
 
         [TestMethod]
-        public void Count_Mine()
+        public void MineCount_Mine()
         {
             // Create a grid.
             Grid grid = new(5, 5, 1);
@@ -76,7 +76,7 @@
         }
 
         [TestMethod]
-        public void Count_Positive()
+        public void MineCount_Positive()
         {
             // Create a grid.
             Grid grid = new(2, 2, 2);
@@ -89,7 +89,7 @@
         }
 
         [TestMethod]
-        public void Count_Zero()
+        public void MineCount_Zero()
         {
             // Create a grid.
             Grid grid = new(10, 10, 1);
