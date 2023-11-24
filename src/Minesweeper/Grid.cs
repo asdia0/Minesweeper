@@ -52,6 +52,17 @@
         }
 
         /// <summary>
+        /// Gets a list of all <see cref="Cell">cells</see> without <see cref="Cell.HasMine">mines</see>.
+        /// </summary>
+        public List<Cell> SafeCells
+        {
+            get
+            {
+                return this.Cells.Where(cell => !cell.HasMine).ToList();
+            }
+        }
+
+        /// <summary>
         /// Gets the <see cref="State">state</see> of the grid.
         /// </summary>
         public State State { get; init; }
