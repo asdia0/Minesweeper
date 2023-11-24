@@ -161,11 +161,10 @@
         public void OpenCell(Cell cell)
         {
             // Skip cell if
-            // 1. game has ended
-            // 2. cell is in incorrect grid
-            // 3. cell has already been opened
-            // 4. cell is flagged.
-            if (this.State != Minesweeper.State.Ongoing || cell.Grid != this.Grid || cell.IsOpen || cell.HasFlag)
+            // 1. game has ended (success or fail)
+            // 2. cell has already been opened
+            // 3. cell is flagged.
+            if (this.State == State.Success || this.State == State.Fail || cell.IsOpen || cell.HasFlag)
             {
                 return;
             }
