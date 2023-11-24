@@ -17,7 +17,7 @@
         /// <summary>
         /// Gets or sets the current <see cref="Game">game</see> <see cref="State">state</see>. Return `null` if the game has not started (no <see cref="Cell">cells</see> have been opened).
         /// </summary>
-        public State? State { get; set; } = null;
+        public State State { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Game"/> class.
@@ -31,6 +31,7 @@
             Utility.CheckGridParams(length, width, mines);
 
             this.Grid = new(length, width, mines);
+            this.State = State.ToBegin;
         }
 
         /// <summary>
@@ -40,6 +41,7 @@
         public Game(Grid grid)
         {
             this.Grid = grid;
+            this.State = State.ToBegin;
         }
 
         /// <summary>
@@ -62,7 +64,7 @@
             }
 
             // Check if this is the first cell being opened.
-            if (this.State == null)
+            if (this.State == State.ToBegin)
             {
                 this.State = Minesweeper.State.Ongoing;
 

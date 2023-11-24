@@ -41,6 +41,11 @@
         public List<Cell> Cells { get; init; }
 
         /// <summary>
+        /// Gets the <see cref="State">state</see> of the grid.
+        /// </summary>
+        public State State { get; init; }
+
+        /// <summary>
         /// Gets the 3BV of the grid.
         /// 3BV, or Bechtel's Board Benchmark Value, is the minimum number of left clicks required to clear a board.
         /// 3BV = <see cref="OpeningCount">number of openings</see> + all numbers that are "landlocked".
