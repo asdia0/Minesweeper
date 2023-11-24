@@ -85,6 +85,36 @@
         }
 
         /// <summary>
+        /// Gets the <see cref="State">state</see> of the <see cref="Grid">grid</see>.
+        /// </summary>
+        public State State
+        {
+            get
+            {
+                // Game is yet to begin; no action has been committed.
+                if (!this.KnownMinedCells.Union(this.KnownSafeCells).Any())
+                {
+                    return State.ToBegin;
+                }
+
+                // Game lost; a miend cell has been opened.
+                if (this.KnownSafeCells.Where(cell => cell.HasMine).Any())
+                {
+                    return State.Fail;
+                }
+
+                // Game won; all safe cells have been opened.
+                if (this.SafeCells.All(this.KnownSafeCells.Contains) && this.SafeCells.Count == this.KnownSafeCells.Count)
+                {
+                    return State.Success;
+                }
+
+                // Game ongoing.
+                return State.Ongoing;
+            }
+        }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="Grid"/> class.
         /// </summary>
         /// <param name="length">The length (y-axis) of the <see cref="Grid">grid </see> measured in <see cref="Cell">cells</see>.</param>
