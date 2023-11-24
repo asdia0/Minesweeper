@@ -29,7 +29,7 @@
             // Create a grid.
             Grid grid = new(5, 5, 1);
 
-            // Select the first cell from the grid.
+            // Select a corner cell.
             Cell cell = grid.Cells[0];
 
             // Check that there are 3 adjacent cells.
@@ -42,7 +42,7 @@
             // Create a grid.
             Grid grid = new(5, 5, 1);
 
-            // Select the first cell from the grid.
+            // Select an edge cell.
             Cell cell = grid.Cells[1];
 
             // Check that there are 5 adjacent cells.
@@ -55,7 +55,7 @@
             // Create a grid.
             Grid grid = new(5, 5, 1);
 
-            // Select the first cell from the grid.
+            // Select the middle cell.
             Cell cell = grid.Cells[12];
 
             // Check that there are 8 adjacent cells.
