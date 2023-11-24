@@ -1,6 +1,7 @@
 ﻿namespace Minesweeper.Test
 {
     using System.Linq;
+    using System.Threading;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
     [TestClass]
@@ -10,8 +11,7 @@
         public void Cell()
         {
             // Create a grid.
-            Game game = new(5, 5, 1);
-            Grid grid = game.Grid;
+            Grid grid = new(5, 5, 1);
 
             // Select the first cell from the grid.
             Cell cell = grid.Cells[0];
@@ -27,8 +27,7 @@
         public void AdjacentCells_Corner()
         {
             // Create a grid.
-            Game game = new(5, 5, 1);
-            Grid grid = game.Grid;
+            Grid grid = new(5, 5, 1);
 
             // Select the first cell from the grid.
             Cell cell = grid.Cells[0];
@@ -41,8 +40,7 @@
         public void AdjacentCells_Side()
         {
             // Create a grid.
-            Game game = new(5, 5, 1);
-            Grid grid = game.Grid;
+            Grid grid = new(5, 5, 1);
 
             // Select the first cell from the grid.
             Cell cell = grid.Cells[1];
@@ -55,8 +53,7 @@
         public void AdjacentCells_Middle()
         {
             // Create a grid.
-            Game game = new(5, 5, 1);
-            Grid grid = game.Grid;
+            Grid grid = new(5, 5, 1);
 
             // Select the first cell from the grid.
             Cell cell = grid.Cells[12];
@@ -69,8 +66,7 @@
         public void Count_Mine()
         {
             // Create a grid.
-            Game game = new(5, 5, 1);
-            Grid grid = game.Grid;
+            Grid grid = new(5, 5, 1);
 
             // Select the cell with the mine.
             Cell cell = grid.Cells.Where(cell => cell.HasMine).First();
@@ -83,8 +79,7 @@
         public void Count_Positive()
         {
             // Create a grid.
-            Game game = new(2, 2, 2);
-            Grid grid = game.Grid;
+            Grid grid = new(2, 2, 2);
 
             // Select a cell without a mine.
             Cell cell = grid.Cells.Where(cell => !cell.HasMine).First();
@@ -97,8 +92,7 @@
         public void Count_Zero()
         {
             // Create a grid.
-            Game game = new(10, 10, 1);
-            Grid grid = game.Grid;
+            Grid grid = new(10, 10, 1);
 
             // Select the cell with the mine.
             Cell cell = grid.Cells.Where(cell => cell.HasMine).First();
