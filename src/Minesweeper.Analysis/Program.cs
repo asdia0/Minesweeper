@@ -1,4 +1,4 @@
-﻿namespace Minesweeper.Analysis
+﻿namespace Minesweeper.Solver
 {
     public class Program
     {
