@@ -63,18 +63,18 @@
         }
 
         /// <summary>
-        /// Gets a list of all <see cref="Cell">cells</see> with <see cref="Cell.HasMine">mines</see> that have been flagged.
+        /// Gets a list of all <see cref="Cell">cells</see> that have been flagged; they are assumed to be mined.
         /// </summary>
         public List<Cell> KnownMinedCells
         {
             get
             {
-                return this.MinedCells.Where(cell => cell.HasFlag).ToList();
+                return this.Cells.Where(cell => cell.HasFlag).ToList();
             }
         }
 
         /// <summary>
-        /// Gets a list of all <see cref="Cell">cells</see> that are open.
+        /// Gets a list of all <see cref="Cell">cells</see> that are open; they are known to be safe.
         /// </summary>
         public List<Cell> KnownSafeCells
         {
