@@ -13,8 +13,8 @@
         /// <summary>
         /// The <see cref="Grid">grid</see> has started but has not ended.
         /// </summary>
-
         Ongoing,
+
         /// <summary>
         /// The <see cref="Grid">grid</see> has ended and is a win.
         /// </summary>
