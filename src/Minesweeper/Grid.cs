@@ -214,6 +214,30 @@
 
         /// <summary>
         /// Represents the <see cref="Grid">grid</see> as a <see cref="string"/>.
+        /// <see cref="Cell">Cells</see> that are flagged are represented by "F"s,
+        ///     cells that are  unnknown are represented by "?",
+        ///     while others are represented by their <see cref="Cell.MineCount">mine count</see>.
+        /// </summary>
+        /// <returns>A <see cref="string"/> representation of the <see cref="Grid">grid</see>.</returns>
+        public string ShowKnown()
+        {
+            string str = string.Empty;
+
+            foreach (Cell cell in this.Cells.OrderBy(i => i.Point.ID))
+            {
+                if (cell.Point.ID % this.Length == 0 && cell.Point.ID > 0)
+                {
+                    str += "\n";
+                }
+
+                str += cell.IsOpen ? cell.MineCount : (cell.HasFlag ? "F" : "?");
+            }
+
+            return str;
+        }
+
+        /// <summary>
+        /// Represents the <see cref="Grid">grid</see> as a <see cref="string"/>.
         /// <see cref="Cell">Cells</see> that are mines are represented by "X"s,
         ///     while other are represented by their <see cref="Cell.MineCount">mine count</see>.
         /// </summary>
