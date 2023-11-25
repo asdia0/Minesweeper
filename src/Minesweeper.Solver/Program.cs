@@ -12,8 +12,8 @@ namespace Minesweeper.Solver
     {
         public static void Main()
         {
-            int maxLength = 10;
-            int maxWidth = 10;
+            int maxLength = 1;
+            int maxWidth = 1;
 
             Dictionary<(int, int), List<double>> data = new();
 
@@ -61,7 +61,8 @@ namespace Minesweeper.Solver
             double previousWinRate = 0;
             int streak = 0;
 
-            for (int i = 1; i <= 10000; i++)
+            //for (int i = 1; i <= 10000; i++)
+            for (int i = 1; i <= 1; i++)
             {
                 wins += Solve(grid);
                 double currentWinRate = wins / i;
@@ -86,18 +87,16 @@ namespace Minesweeper.Solver
             // Can do this by iterating through number of mines m and trying to find solutions
             // Get guaranteed solutions at the end
 
+            Grid grid = new(4, 4, 2);
 
-            //for (int m = 1; m <= connectedCells.Count(); m++)
-            for (int m = 1; m <= 1; m++)
+            grid.OpenCell(grid.Cells.Where(i => i.MineCount == 0).FirstOrDefault());
+
+            List<Cell> knownCells = grid.OpenedCells.Union(grid.FlaggedCells).ToList();
+            List<Cell> connectedCells = grid.Cells.Where(cell => !knownCells.Contains(cell) && cell.AdjacentCells.Intersect(knownCells).Any()).ToList();
+            List<Cell> relevantKnownCells = knownCells.Where(cell => cell.AdjacentCells.Intersect(connectedCells).Any()).ToList();
+
+            for (int m = 1; m <= connectedCells.Count(); m++)
             {
-                Grid grid = new(3, 3, 2);
-
-                grid.OpenCell(grid.SafeCells.FirstOrDefault());
-
-                List<Cell> knownCells = grid.OpenedCells.Union(grid.FlaggedCells).ToList();
-                List<Cell> connectedCells = grid.Cells.Where(cell => !knownCells.Contains(cell) && cell.AdjacentCells.Intersect(knownCells).Any()).ToList();
-                List<Cell> relevantKnownCells = knownCells.Where(cell => cell.AdjacentCells.Intersect(connectedCells).Any()).ToList();
-
                 using (Context ctx = new())
                 {
                     IntExpr fakeTrue = ctx.MkInt(1);
@@ -151,8 +150,13 @@ namespace Minesweeper.Solver
 
                     solver.Assert(ctx.MkEq(ctx.MkAdd(expressions.Values), ctx.MkInt(m)));
 
-                    Console.WriteLine(solver.Check());
-                    Console.WriteLine(solver.Model);
+                    Console.WriteLine(m);
+                    Console.WriteLine(grid);
+                    if (solver.Check() == Status.SATISFIABLE)
+                    {
+                        Console.WriteLine(solver.Model);
+                    }
+                    Console.Write("\n");
                 }
             }
 
