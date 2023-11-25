@@ -122,13 +122,13 @@ namespace Minesweeper.Solver
             }
         }
 
+        /// <summary>
+        /// Gets a list of cells that are guaranteed to be safe or mined.
+        /// </summary>
+        /// <param name="grid1"></param>
+        /// <returns></returns>
         public static List<(Cell, bool)> SolveLogic(Grid grid1)
         {
-            // Set up system of boolean equations
-            // Only consider non-landlocked cells so as to reduce computation
-            // Can do this by iterating through number of mines m and trying to find solutions
-            // Get guaranteed solutions at the end
-
             Grid grid = new(9, 9, 10);
 
             grid.OpenCell(grid.Cells.Where(i => i.MineCount == 0).FirstOrDefault());
@@ -152,6 +152,16 @@ namespace Minesweeper.Solver
             return new();
         }
 
+        /// <summary>
+        /// Solves a given grid. Intepretation is not guaranteed to be correct.
+        /// </summary>
+        /// <param name="ctx">The Z3 context.</param>
+        /// <param name="grid">The grid to solve.</param>
+        /// <param name="totalMines">The total number of mines to consider.</param>
+        /// <param name="connectedCells">A list of unknown cells that are adjacent to an opened cell.</param>
+        /// <param name="relevantKnownCells">A list of opened cells that are adjacent to a connected cell.</param>
+        /// <param name="constraints">Extra constraints to add.</param>
+        /// <returns></returns>
         public static List<(Cell, bool)> SolveModel(Context ctx, Grid grid, int totalMines, List<Cell> connectedCells, List<Cell> relevantKnownCells, List<(Cell, bool)> constraints)
         {
             using (ctx)
