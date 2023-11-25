@@ -115,7 +115,7 @@
                 }
 
                 // Game won; all safe cells have been opened.
-                if (this.SafeCells.All(this.OpenedCells.Contains) && this.SafeCells.Count == this.OpenedCells.Count)
+                if (!this.UnknownCells.Any())
                 {
                     return State.Success;
                 }
@@ -188,7 +188,8 @@
                 {
                     cell.HasMine = false;
 
-                    this.SafeCells.First().HasMine = true;
+                    Random rng = new();
+                    this.SafeCells[rng.Next(this.SafeCells.Count)].HasMine = true;
                 }
             }
 
@@ -236,7 +237,7 @@
 
             foreach (Cell cell in this.Cells.OrderBy(i => i.Point.ID))
             {
-                if (cell.Point.ID % this.Length == 0 && cell.Point.ID > 0)
+                if (cell.Point.ID % this.Width == 0 && cell.Point.ID > 0)
                 {
                     str += "\n";
                 }
@@ -280,7 +281,7 @@
 
             foreach (Cell cell in this.Cells.OrderBy(i => i.Point.ID))
             {
-                if (cell.Point.ID % this.Length == 0 && cell.Point.ID > 0)
+                if (cell.Point.ID % this.Width == 0 && cell.Point.ID > 0)
                 {
                     str += "\n";
                 }

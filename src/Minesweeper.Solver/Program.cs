@@ -8,6 +8,8 @@ using System;
 using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using System.Net.NetworkInformation;
+using System.Runtime.ConstrainedExecution;
+using System.ComponentModel.Design;
 
 namespace Minesweeper.Solver
 {
@@ -31,7 +33,15 @@ namespace Minesweeper.Solver
             //string json = JsonConvert.SerializeObject(data, Formatting.Indented);
             //File.WriteAllText("data.json", json);
 
-            SolveLogic(new(10, 10, 1));
+            int wins = 0;
+
+            for (int i = 0; i < 100; i++)
+            {
+                Console.WriteLine((i, wins));
+                wins += Solve(new(16, 30, 99));
+            }
+
+            Console.WriteLine(wins);
         }
 
         public static List<double> GetWinRateData(int p, int q)
@@ -87,25 +97,20 @@ namespace Minesweeper.Solver
 
         public static int Solve(Grid grid)
         {
-            while (grid.State != State.Success && grid.State != State.Fail)
+            while (grid.State == State.ToBegin || grid.State == State.Ongoing)
             {
-                List<(Cell, bool)>? logic = SolveLogic(grid);
+                Console.WriteLine(grid.ShowKnown());
+                Console.WriteLine();
 
-                if (logic != null)
+                LowHangingFruit(grid);
+                
+                List<(Cell, bool)> logic = SolveLogic(grid);
+
+                if (logic.Any())
                 {
-                    foreach ((Cell cell, bool hasMine) in logic)
-                    {
-                        if (hasMine)
-                        {
-                            cell.HasFlag = true;
-                        }
-                        else
-                        {
-                            grid.OpenCell(cell);
-                        }
-                    }
+                    UpdateGrid(grid, logic);
                 }
-                else
+                else if (grid.State == State.ToBegin || grid.State == State.Ongoing)
                 {
                     Cell guess = GuessCell(grid);
 
@@ -123,24 +128,71 @@ namespace Minesweeper.Solver
             }
         }
 
+        public static void UpdateGrid(Grid grid, List<(Cell, bool)> cellsToUpdate)
+        {
+            foreach ((Cell cell, bool hasMine) in cellsToUpdate)
+            {
+                if (hasMine)
+                {
+                    cell.HasFlag = true;
+                }
+                else
+                {
+                    grid.OpenCell(cell);
+                }
+            }
+        }
+
+        public static void LowHangingFruit(Grid grid)
+        {
+            bool update = true;
+
+            while (update)
+            {
+                int updated = 0;
+
+                foreach (Cell cell in grid.OpenedCells.Where(i => i.AdjacentCells.Intersect(grid.UnknownCells).Any()))
+                {
+                    List<Cell> adjacentUnknown = cell.AdjacentCells.Intersect(grid.UnknownCells).ToList();
+                    List<Cell> adjacentFlagged = cell.AdjacentCells.Intersect(grid.FlaggedCells).ToList();
+
+                    if (adjacentUnknown.Count() + adjacentFlagged.Count() == cell.MineCount)
+                    {
+                        foreach (Cell adjacentUnknownCell in adjacentUnknown)
+                        {
+                            adjacentUnknownCell.HasFlag = true;
+                        }
+                        updated++;
+                    }
+
+                    if (adjacentFlagged.Count == cell.MineCount)
+                    {
+                        grid.Chord(cell);
+                        updated++;
+                    }
+                }
+
+                if (updated == 0)
+                {
+                    update = false;
+                }
+            }
+        }
+
         /// <summary>
         /// Gets a list of cells that are guaranteed to be safe or mined.
         /// </summary>
         /// <param name="grid1"></param>
         /// <returns></returns>
-        public static List<(Cell, bool)> SolveLogic(Grid grid1)
+        public static List<(Cell, bool)> SolveLogic(Grid grid)
         {
-            Grid grid = new(10, 10, 10);
-
-            grid.OpenCell(grid.Cells.Where(i => i.MineCount == 0).FirstOrDefault());
-
             List<Cell> connectedCells = grid.Cells.Where(cell => grid.UnknownCells.Contains(cell) && cell.AdjacentCells.Intersect(grid.OpenedCells).Any()).ToList();
             List<Cell> relevantKnownCells = grid.OpenedCells.Where(cell => cell.AdjacentCells.Intersect(connectedCells).Any()).ToList();
 
             List<(int, List<(Cell, bool)>)> allInterpretations = new();
 
             // Preliminary check - go through all possible mine counts
-            for (int mines = 1; mines <= Math.Min(connectedCells.Count(), grid.Mines); mines++)
+            for (int mines = 0; mines <= Math.Min(connectedCells.Count(), grid.Mines - grid.FlaggedCells.Count); mines++)
             {
                 List<(Cell, bool)> interpretation = SolveModel(new(), grid, mines, connectedCells, relevantKnownCells, new());
 
@@ -168,7 +220,40 @@ namespace Minesweeper.Solver
                 }
             }
 
-            return potentialCells.Select(kvp => (kvp.Key, kvp.Value)).ToList();
+            Dictionary<Cell, bool> guaranteedCells = potentialCells.ToDictionary(entry => entry.Key, entry => entry.Value);
+
+            // Try negating the mine status of potential cells
+            foreach (KeyValuePair<Cell, bool> kvp in potentialCells)
+            {
+                Cell cell = kvp.Key;
+                bool hasMine = kvp.Value;
+
+                if (!guaranteedCells.ContainsKey(cell))
+                {
+                    continue;
+                }
+
+                for (int mines = 0; mines <= Math.Min(connectedCells.Count(), grid.Mines - grid.FlaggedCells.Count); mines++)
+                {
+                    List<(Cell, bool)> model = SolveModel(new(), grid, mines, connectedCells, relevantKnownCells, new List<(Cell, bool)> { (cell, !hasMine) });
+
+                    if (model.Any())
+                    {
+                        guaranteedCells.Remove(cell);
+
+                        // further delete any potential cell that had a different value
+                        foreach ((Cell cell1, bool hasMine1) in model)
+                        {
+                            if (potentialCells.ContainsKey(cell1) && hasMine1 != potentialCells[cell1])
+                            {
+                                guaranteedCells.Remove(cell1);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return guaranteedCells.Select(kvp => (kvp.Key, kvp.Value)).ToList();
         }
 
         /// <summary>
@@ -183,6 +268,11 @@ namespace Minesweeper.Solver
         /// <returns></returns>
         public static List<(Cell, bool)> SolveModel(Context ctx, Grid grid, int totalMines, List<Cell> connectedCells, List<Cell> relevantKnownCells, List<(Cell, bool)> constraints)
         {
+            if (!connectedCells.Any())
+            {
+                return new();
+            }
+
             using (ctx)
             {
                 IntExpr fakeTrue = ctx.MkInt(1);
@@ -217,14 +307,14 @@ namespace Minesweeper.Solver
                 solver.Assert(ctx.MkEq(ctx.MkAdd(expressions.Values), ctx.MkInt(totalMines)));
 
                 // Add constraints
-                foreach ((Cell cell, bool hsMine) in constraints)
+                foreach ((Cell cell, bool hasMine) in constraints)
                 {
                     if (!connectedCells.Contains(cell))
                     {
                         continue;
                     }
 
-                    solver.Assert(ctx.MkEq(expressions[cell], ctx.MkInt(hsMine ? "1" : "0")));
+                    solver.Assert(ctx.MkEq(expressions[cell], ctx.MkInt(hasMine ? 1 : 0)));
                 }
 
                 // Return intepretations (if any)
@@ -250,7 +340,7 @@ namespace Minesweeper.Solver
     
         public static Cell GuessCell(Grid grid)
         {
-            return grid.Cells.Where(cell => !cell.IsOpen).First();
+            return grid.UnknownCells.OrderBy(i => i.AdjacentCells.Count).First();
         }
     }
 }
