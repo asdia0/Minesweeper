@@ -3,13 +3,7 @@ using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
 using Microsoft.Z3;
-using System.ComponentModel;
 using System;
-using System.Reflection.Metadata;
-using System.Runtime.InteropServices;
-using System.Net.NetworkInformation;
-using System.Runtime.ConstrainedExecution;
-using System.ComponentModel.Design;
 
 namespace Minesweeper.Solver
 {
