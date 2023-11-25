@@ -115,7 +115,6 @@ namespace Minesweeper.Solver
             return 0;
         }
 
-
         public static List<(Cell, bool)>? SolveModel(Context ctx, Grid grid, int totalMines, List<Cell> connectedCells, List<Cell> relevantKnownCells, List<(Cell, bool)> constraints)
         {
             using (ctx)
