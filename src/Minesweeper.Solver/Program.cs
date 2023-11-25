@@ -120,7 +120,7 @@ namespace Minesweeper.Solver
             }
         }
 
-        public static List<(Cell, bool)>? SolveLogic(Grid grid1)
+        public static List<(Cell, bool)> SolveLogic(Grid grid1)
         {
             // Set up system of boolean equations
             // Only consider non-landlocked cells so as to reduce computation
@@ -136,24 +136,21 @@ namespace Minesweeper.Solver
 
             for (int totalMines = 1; totalMines <= connectedCells.Count(); totalMines++)
             {
-                List<(Cell, bool)>? interpretation = SolveModel(new(), grid, totalMines, connectedCells, relevantKnownCells, new());
+                List<(Cell, bool)> interpretation = SolveModel(new(), grid, totalMines, connectedCells, relevantKnownCells, new());
 
-                if (interpretation != null)
+                Console.WriteLine(totalMines);
+                Console.WriteLine(grid.ShowKnown());
+                foreach ((Cell cell, bool status) in interpretation)
                 {
-                    Console.WriteLine(totalMines);
-                    Console.WriteLine(grid.ShowKnown());
-                    foreach ((Cell cell, bool status) in interpretation)
-                    {
-                        Console.WriteLine((cell.Point.ID, status));
-                    }
-                    Console.WriteLine();
+                    Console.WriteLine((cell.Point.ID, status));
                 }
+                Console.WriteLine();
             }
 
-            return 0;
+            return new();
         }
 
-        public static List<(Cell, bool)>? SolveModel(Context ctx, Grid grid, int totalMines, List<Cell> connectedCells, List<Cell> relevantKnownCells, List<(Cell, bool)> constraints)
+        public static List<(Cell, bool)> SolveModel(Context ctx, Grid grid, int totalMines, List<Cell> connectedCells, List<Cell> relevantKnownCells, List<(Cell, bool)> constraints)
         {
             using (ctx)
             {
@@ -216,7 +213,7 @@ namespace Minesweeper.Solver
                     return result;
                 }
 
-                return null;
+                return new();
             }
         }
     
