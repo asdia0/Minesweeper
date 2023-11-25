@@ -107,7 +107,7 @@ namespace Minesweeper.Solver
                     Dictionary<Cell, IntExpr> expressions = new();
 
                     // Initialize variables
-                    foreach (Cell cell in connectedCells.Union(relevantKnownCells))
+                    foreach (Cell cell in connectedCells)
                     {
                         int id = cell.Point.ID;
                         IntExpr expr = ctx.MkIntConst($"c_{id}");
@@ -118,18 +118,18 @@ namespace Minesweeper.Solver
                     }
 
                     // Set known values 
-                    foreach (Cell cell in relevantKnownCells)
-                    {
-                        if (cell.HasFlag)
-                        {
-                            solver.Assert(ctx.MkEq(expressions[cell], fakeTrue));
-                        }
+                    //foreach (Cell cell in relevantKnownCells)
+                    //{
+                    //    if (cell.HasFlag)
+                    //    {
+                    //        solver.Assert(ctx.MkEq(expressions[cell], fakeTrue));
+                    //    }
 
-                        else if (cell.IsOpen)
-                        {
-                            solver.Assert(ctx.MkEq(expressions[cell], fakeFalse));
-                        }
-                    }
+                    //    else if (cell.IsOpen)
+                    //    {
+                    //        solver.Assert(ctx.MkEq(expressions[cell], fakeFalse));
+                    //    }
+                    //}
 
                     // Set up mine count
                     foreach (Cell cell in relevantKnownCells)
@@ -139,19 +139,18 @@ namespace Minesweeper.Solver
                             break;
                         }
 
-                        int mineCount = (int)cell.MineCount - grid.FlaggedCells.Where(i => !relevantKnownCells.Contains(i) && i.AdjacentCells.Contains(cell)).Count();
+                        int mineCount = (int)cell.MineCount - grid.FlaggedCells.Intersect(cell.AdjacentCells).Count();
 
-                        List<IntExpr> adjacentCells = cell.AdjacentCells.Intersect(relevantKnownCells.Union(connectedCells)).Select(i => expressions[i]).ToList();
+                        List<IntExpr> adjacentCells = connectedCells.Intersect(cell.AdjacentCells).Select(i => expressions[i]).ToList();
 
                         solver.Assert(ctx.MkEq(ctx.MkAdd(adjacentCells), ctx.MkInt(mineCount)));
                     }
 
                     // Sum of mines
-
                     solver.Assert(ctx.MkEq(ctx.MkAdd(expressions.Values), ctx.MkInt(m)));
 
                     Console.WriteLine(m);
-                    Console.WriteLine(grid);
+                    Console.WriteLine(grid.ShowKnown());
                     if (solver.Check() == Status.SATISFIABLE)
                     {
                         Console.WriteLine(solver.Model);
