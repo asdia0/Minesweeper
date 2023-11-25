@@ -82,7 +82,45 @@ namespace Minesweeper.Solver
             return previousWinRate;
         }
 
-        public static int Solve(Grid grid1)
+        public static int Solve(Grid grid)
+        {
+            while (grid.State != State.Success && grid.State != State.Fail)
+            {
+                List<(Cell, bool)>? logic = SolveLogic(grid);
+
+                if (logic != null)
+                {
+                    foreach ((Cell cell, bool hasMine) in logic)
+                    {
+                        if (hasMine)
+                        {
+                            cell.HasFlag = true;
+                        }
+                        else
+                        {
+                            grid.OpenCell(cell);
+                        }
+                    }
+                }
+                else
+                {
+                    Cell guess = GuessCell(grid);
+
+                    grid.OpenCell(guess);
+                }
+            }
+
+            if (grid.State == State.Success)
+            {
+                return 1;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+        public static List<(Cell, bool)>? SolveLogic(Grid grid1)
         {
             // Set up system of boolean equations
             // Only consider non-landlocked cells so as to reduce computation
@@ -180,6 +218,11 @@ namespace Minesweeper.Solver
 
                 return null;
             }
+        }
+    
+        public static Cell GuessCell(Grid grid)
+        {
+            return grid.Cells.Where(cell => !cell.IsOpen).First();
         }
     }
 }
