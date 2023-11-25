@@ -14,21 +14,23 @@ namespace Minesweeper.Solver
     {
         public static void Main()
         {
-            int maxLength = 1;
-            int maxWidth = 1;
+            //int maxLength = 10;
+            //int maxWidth = 10;
 
-            Dictionary<(int, int), List<double>> data = new();
+            //Dictionary<(int, int), List<double>> data = new();
 
-            for (int p = 1; p <= maxLength; p++)
-            {
-                for (int q = p; q <= maxWidth; q++)
-                {
-                    data.Add((p, q), GetWinRateData(p, q));
-                }
-            }
+            //for (int p = 1; p <= maxLength; p++)
+            //{
+            //    for (int q = p; q <= maxWidth; q++)
+            //    {
+            //        data.Add((p, q), GetWinRateData(p, q));
+            //    }
+            //}
 
-            string json = JsonConvert.SerializeObject(data, Formatting.Indented);
-            File.WriteAllText("data.json", json);
+            //string json = JsonConvert.SerializeObject(data, Formatting.Indented);
+            //File.WriteAllText("data.json", json);
+
+            SolveLogic(new(10, 10, 1));
         }
 
         public static List<double> GetWinRateData(int p, int q)
@@ -127,7 +129,7 @@ namespace Minesweeper.Solver
             // Can do this by iterating through number of mines m and trying to find solutions
             // Get guaranteed solutions at the end
 
-            Grid grid = new(4, 4, 2);
+            Grid grid = new(9, 9, 10);
 
             grid.OpenCell(grid.Cells.Where(i => i.MineCount == 0).FirstOrDefault());
 
@@ -205,9 +207,9 @@ namespace Minesweeper.Solver
                     foreach (FuncDecl d in model.Decls)
                     {
                         Cell cell = grid.Cells.Where(i => i.Point.ID.ToString() == d.Name.ToString()).First();
-                        bool status = model.ConstInterp(d).ToString() == "1" ? true : false;
+                        bool hasMine = model.ConstInterp(d).ToString() == "1" ? true : false;
 
-                        result.Add((cell, status));
+                        result.Add((cell, hasMine));
                     }
 
                     return result;
