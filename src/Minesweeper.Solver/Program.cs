@@ -98,13 +98,13 @@ namespace Minesweeper.Solver
 
             for (int totalMines = 1; totalMines <= connectedCells.Count(); totalMines++)
             {
-                List<(Cell, bool)>? model = SolveModel(new(), grid, totalMines, connectedCells, relevantKnownCells, new());
+                List<(Cell, bool)>? interpretation = SolveModel(new(), grid, totalMines, connectedCells, relevantKnownCells, new());
 
-                if (model != null)
+                if (interpretation != null)
                 {
                     Console.WriteLine(totalMines);
                     Console.WriteLine(grid.ShowKnown());
-                    foreach ((Cell cell, bool status) in model)
+                    foreach ((Cell cell, bool status) in interpretation)
                     {
                         Console.WriteLine((cell.Point.ID, status));
                     }
