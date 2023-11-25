@@ -6,6 +6,7 @@ using Microsoft.Z3;
 using System.ComponentModel;
 using System;
 using System.Reflection.Metadata;
+using System.Runtime.InteropServices;
 
 namespace Minesweeper.Solver
 {
@@ -92,63 +93,94 @@ namespace Minesweeper.Solver
 
             grid.OpenCell(grid.Cells.Where(i => i.MineCount == 0).FirstOrDefault());
 
-            List<Cell> knownCells = grid.OpenedCells.Union(grid.FlaggedCells).ToList();
-            List<Cell> connectedCells = grid.Cells.Where(cell => !knownCells.Contains(cell) && cell.AdjacentCells.Intersect(knownCells).Any()).ToList();
-            List<Cell> relevantKnownCells = knownCells.Where(cell => cell.AdjacentCells.Intersect(connectedCells).Any()).ToList();
+            List<Cell> connectedCells = grid.Cells.Where(cell => !grid.OpenedCells.Contains(cell) && cell.AdjacentCells.Intersect(grid.OpenedCells).Any()).ToList();
+            List<Cell> relevantKnownCells = grid.OpenedCells.Where(cell => cell.AdjacentCells.Intersect(connectedCells).Any()).ToList();
 
-            for (int m = 1; m <= connectedCells.Count(); m++)
+            for (int totalMines = 1; totalMines <= connectedCells.Count(); totalMines++)
             {
-                using (Context ctx = new())
+                List<(Cell, bool)> model = SolveModel(new(), grid, totalMines, connectedCells, relevantKnownCells, new());
+
+                if (model != null)
                 {
-                    IntExpr fakeTrue = ctx.MkInt(1);
-                    IntExpr fakeFalse = ctx.MkInt(0);
-
-                    Microsoft.Z3.Solver solver = ctx.MkSolver();
-
-                    Dictionary<Cell, IntExpr> expressions = new();
-
-                    // Initialize variables
-                    foreach (Cell cell in connectedCells)
-                    {
-                        int id = cell.Point.ID;
-                        IntExpr expr = ctx.MkIntConst($"c_{id}");
-                        expressions.Add(cell, expr);
-
-                        // Make sure each expressions are "boolean"
-                        solver.Assert(ctx.MkOr(ctx.MkEq(expr, fakeTrue), ctx.MkEq(expr, fakeFalse)));
-                    }
-
-                    // Set up mine count
-                    foreach (Cell cell in relevantKnownCells)
-                    {
-                        if (cell.HasFlag)
-                        {
-                            break;
-                        }
-
-                        int mineCount = (int)cell.MineCount - grid.FlaggedCells.Intersect(cell.AdjacentCells).Count();
-
-                        List<IntExpr> adjacentCells = connectedCells.Intersect(cell.AdjacentCells).Select(i => expressions[i]).ToList();
-
-                        solver.Assert(ctx.MkEq(ctx.MkAdd(adjacentCells), ctx.MkInt(mineCount)));
-                    }
-
-                    // Sum of mines
-                    solver.Assert(ctx.MkEq(ctx.MkAdd(expressions.Values), ctx.MkInt(m)));
-
-                    Console.WriteLine(m);
+                    Console.WriteLine(totalMines);
                     Console.WriteLine(grid.ShowKnown());
-
-                    // If there is a solution, begin blocking model
-                    if (solver.Check() == Status.SATISFIABLE)
+                    foreach ((Cell cell, bool status) in model)
                     {
-                        Console.WriteLine(solver.Model);
+                        Console.WriteLine((cell.Point.ID, status));
                     }
-                    Console.Write("\n");
+                    Console.WriteLine();
                 }
             }
 
             return 0;
+        }
+
+
+        public static List<(Cell, bool)> SolveModel(Context ctx, Grid grid, int totalMines, List<Cell> connectedCells, List<Cell> relevantKnownCells, List<(Cell, bool)> constraints)
+        {
+            using (ctx)
+            {
+                IntExpr fakeTrue = ctx.MkInt(1);
+                IntExpr fakeFalse = ctx.MkInt(0);
+
+                Microsoft.Z3.Solver solver = ctx.MkSolver();
+
+                Dictionary<Cell, IntExpr> expressions = new();
+
+                // Initialize variables
+                foreach (Cell cell in connectedCells)
+                {
+                    int id = cell.Point.ID;
+                    IntExpr expr = ctx.MkIntConst(id.ToString());
+                    expressions.Add(cell, expr);
+
+                    // Make sure each expressions are "boolean"
+                    solver.Assert(ctx.MkOr(ctx.MkEq(expr, fakeTrue), ctx.MkEq(expr, fakeFalse)));
+                }
+
+                // Set up mine count
+                foreach (Cell cell in relevantKnownCells)
+                {
+                    int mineCount = (int)cell.MineCount - grid.FlaggedCells.Intersect(cell.AdjacentCells).Count();
+
+                    List<IntExpr> adjacentCells = connectedCells.Intersect(cell.AdjacentCells).Select(i => expressions[i]).ToList();
+
+                    solver.Assert(ctx.MkEq(ctx.MkAdd(adjacentCells), ctx.MkInt(mineCount)));
+                }
+
+                // Sum of mines
+                solver.Assert(ctx.MkEq(ctx.MkAdd(expressions.Values), ctx.MkInt(totalMines)));
+
+                // Add constraints
+                foreach ((Cell cell, bool status) in constraints)
+                {
+                    if (!connectedCells.Contains(cell))
+                    {
+                        continue;
+                    }
+
+                    solver.Assert(ctx.MkEq(expressions[cell], ctx.MkInt(status ? "1" : "0")));
+                }
+
+                // Return intepretations (if any)
+                if (solver.Check() == Status.SATISFIABLE)
+                {
+                    List<(Cell, bool)> result = new();
+                    Model model = solver.Model;
+
+                    foreach (FuncDecl d in model.Decls)
+                    {
+                        Cell cell = grid.Cells.Where(i => i.Point.ID.ToString() == d.Name.ToString()).First();
+                        bool status = model.ConstInterp(d).ToString() == "1" ? true : false;
+
+                        result.Add((cell, status));
+                    }
+
+                    return result;
+                }
+
+                return null;
+            }
         }
     }
 }
