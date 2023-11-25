@@ -98,7 +98,7 @@ namespace Minesweeper.Solver
 
             for (int totalMines = 1; totalMines <= connectedCells.Count(); totalMines++)
             {
-                List<(Cell, bool)> model = SolveModel(new(), grid, totalMines, connectedCells, relevantKnownCells, new());
+                List<(Cell, bool)>? model = SolveModel(new(), grid, totalMines, connectedCells, relevantKnownCells, new());
 
                 if (model != null)
                 {
