@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System;
 using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
+using System.Net.NetworkInformation;
 
 namespace Minesweeper.Solver
 {
@@ -129,27 +130,45 @@ namespace Minesweeper.Solver
         /// <returns></returns>
         public static List<(Cell, bool)> SolveLogic(Grid grid1)
         {
-            Grid grid = new(9, 9, 10);
+            Grid grid = new(10, 10, 10);
 
             grid.OpenCell(grid.Cells.Where(i => i.MineCount == 0).FirstOrDefault());
 
             List<Cell> connectedCells = grid.Cells.Where(cell => grid.UnknownCells.Contains(cell) && cell.AdjacentCells.Intersect(grid.OpenedCells).Any()).ToList();
             List<Cell> relevantKnownCells = grid.OpenedCells.Where(cell => cell.AdjacentCells.Intersect(connectedCells).Any()).ToList();
 
-            for (int totalMines = 1; totalMines <= Math.Min(connectedCells.Count(), grid.Mines); totalMines++)
-            {
-                List<(Cell, bool)> interpretation = SolveModel(new(), grid, totalMines, connectedCells, relevantKnownCells, new());
+            List<(int, List<(Cell, bool)>)> allInterpretations = new();
 
-                Console.WriteLine(totalMines);
-                Console.WriteLine(grid.ShowKnown());
-                foreach ((Cell cell, bool status) in interpretation)
+            // Preliminary check - go through all possible mine counts
+            for (int mines = 1; mines <= Math.Min(connectedCells.Count(), grid.Mines); mines++)
+            {
+                List<(Cell, bool)> interpretation = SolveModel(new(), grid, mines, connectedCells, relevantKnownCells, new());
+
+                if (interpretation.Any())
                 {
-                    Console.WriteLine((cell.Point.ID, status));
+                    allInterpretations.Add((mines, interpretation));
                 }
-                Console.WriteLine();
             }
 
-            return new();
+            Dictionary<Cell, bool> potentialCells = new();
+
+            // Check for cells with constant interpretations
+            foreach ((int mines, List<(Cell, bool)> interpretation) in allInterpretations)
+            {
+                foreach ((Cell cell, bool hasMine) in interpretation)
+                {
+                    if (potentialCells.Keys.Contains(cell) && potentialCells[cell] != hasMine)
+                    {
+                        potentialCells.Remove(cell);
+                    }
+                    else if (!potentialCells.Keys.Contains(cell))
+                    {
+                        potentialCells.Add(cell, hasMine);
+                    }
+                }
+            }
+
+            return potentialCells.Select(kvp => (kvp.Key, kvp.Value)).ToList();
         }
 
         /// <summary>
