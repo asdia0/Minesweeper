@@ -133,10 +133,10 @@ namespace Minesweeper.Solver
 
             grid.OpenCell(grid.Cells.Where(i => i.MineCount == 0).FirstOrDefault());
 
-            List<Cell> connectedCells = grid.Cells.Where(cell => !grid.OpenedCells.Contains(cell) && cell.AdjacentCells.Intersect(grid.OpenedCells).Any()).ToList();
+            List<Cell> connectedCells = grid.Cells.Where(cell => grid.UnknownCells.Contains(cell) && cell.AdjacentCells.Intersect(grid.OpenedCells).Any()).ToList();
             List<Cell> relevantKnownCells = grid.OpenedCells.Where(cell => cell.AdjacentCells.Intersect(connectedCells).Any()).ToList();
 
-            for (int totalMines = 1; totalMines <= connectedCells.Count(); totalMines++)
+            for (int totalMines = 1; totalMines <= Math.Min(connectedCells.Count(), grid.Mines); totalMines++)
             {
                 List<(Cell, bool)> interpretation = SolveModel(new(), grid, totalMines, connectedCells, relevantKnownCells, new());
 
