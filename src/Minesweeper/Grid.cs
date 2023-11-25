@@ -241,7 +241,28 @@
                     str += "\n";
                 }
 
-                str += cell.IsOpen ? cell.MineCount : (cell.HasFlag ? "F" : "?");
+                if (cell.HasFlag)
+                {
+                    str += "F";
+                }
+                else
+                {
+                    if (cell.IsOpen)
+                    {
+                        if (cell.HasMine)
+                        {
+                            str += "X";
+                        }
+                        else
+                        {
+                            str += cell.MineCount;
+                        }
+                    }
+                    else
+                    {
+                        str += "?";
+                    }
+                }
             }
 
             return str;
