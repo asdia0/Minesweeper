@@ -74,13 +74,24 @@
         }
 
         /// <summary>
-        /// Gets a list of all <see cref="Cell">cells</see> that are open.
+        /// Gets a list of all <see cref="Cell">cells</see> that have been opened.
         /// </summary>
         public List<Cell> OpenedCells
         {
             get
             {
                 return this.Cells.Where(cell => cell.IsOpen).ToList();
+            }
+        }
+
+        /// <summary>
+        /// Gets a list of <see cref="Cell">cells</see> that are neither flagged nor opened.
+        /// </summary>
+        public List<Cell> UnknownCells
+        {
+            get
+            {
+                return this.Cells.Except(this.FlaggedCells).Except(this.OpenedCells).ToList();
             }
         }
 
