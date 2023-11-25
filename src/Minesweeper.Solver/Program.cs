@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using Microsoft.Z3;
 using System.ComponentModel;
 using System;
+using System.Reflection.Metadata;
 
 namespace Minesweeper.Solver
 {
@@ -117,20 +118,6 @@ namespace Minesweeper.Solver
                         solver.Assert(ctx.MkOr(ctx.MkEq(expr, fakeTrue), ctx.MkEq(expr, fakeFalse)));
                     }
 
-                    // Set known values 
-                    //foreach (Cell cell in relevantKnownCells)
-                    //{
-                    //    if (cell.HasFlag)
-                    //    {
-                    //        solver.Assert(ctx.MkEq(expressions[cell], fakeTrue));
-                    //    }
-
-                    //    else if (cell.IsOpen)
-                    //    {
-                    //        solver.Assert(ctx.MkEq(expressions[cell], fakeFalse));
-                    //    }
-                    //}
-
                     // Set up mine count
                     foreach (Cell cell in relevantKnownCells)
                     {
@@ -151,6 +138,8 @@ namespace Minesweeper.Solver
 
                     Console.WriteLine(m);
                     Console.WriteLine(grid.ShowKnown());
+
+                    // If there is a solution, begin blocking model
                     if (solver.Check() == Status.SATISFIABLE)
                     {
                         Console.WriteLine(solver.Model);
