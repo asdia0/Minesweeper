@@ -188,14 +188,14 @@ namespace Minesweeper.Solver
                 solver.Assert(ctx.MkEq(ctx.MkAdd(expressions.Values), ctx.MkInt(totalMines)));
 
                 // Add constraints
-                foreach ((Cell cell, bool status) in constraints)
+                foreach ((Cell cell, bool hsMine) in constraints)
                 {
                     if (!connectedCells.Contains(cell))
                     {
                         continue;
                     }
 
-                    solver.Assert(ctx.MkEq(expressions[cell], ctx.MkInt(status ? "1" : "0")));
+                    solver.Assert(ctx.MkEq(expressions[cell], ctx.MkInt(hsMine ? "1" : "0")));
                 }
 
                 // Return intepretations (if any)
