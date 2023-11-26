@@ -32,7 +32,7 @@ namespace Minesweeper.Solver
             for (int i = 0; i < 100; i++)
             {
                 Console.WriteLine((i, wins));
-                wins += Solve(new(16, 30, 99));
+                wins += Solve(new(10, 10, 15));
             }
 
             Console.WriteLine(wins);
@@ -102,7 +102,17 @@ namespace Minesweeper.Solver
 
                 if (logic.Any())
                 {
-                    UpdateGrid(grid, logic);
+                    foreach ((Cell cell, bool hasMine) in logic)
+                    {
+                        if (hasMine)
+                        {
+                            cell.HasFlag = true;
+                        }
+                        else
+                        {
+                            grid.OpenCell(cell);
+                        }
+                    }
                 }
                 else if (grid.State == State.ToBegin || grid.State == State.Ongoing)
                 {
@@ -119,21 +129,6 @@ namespace Minesweeper.Solver
             else
             {
                 return 0;
-            }
-        }
-
-        public static void UpdateGrid(Grid grid, List<(Cell, bool)> cellsToUpdate)
-        {
-            foreach ((Cell cell, bool hasMine) in cellsToUpdate)
-            {
-                if (hasMine)
-                {
-                    cell.HasFlag = true;
-                }
-                else
-                {
-                    grid.OpenCell(cell);
-                }
             }
         }
 
