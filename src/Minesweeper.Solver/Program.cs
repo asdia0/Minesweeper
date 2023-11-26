@@ -27,15 +27,25 @@ namespace Minesweeper.Solver
             //string json = JsonConvert.SerializeObject(data, Formatting.Indented);
             //File.WriteAllText("data.json", json);
 
-            int wins = 0;
+            //int wins = 0;
 
-            for (int i = 0; i < 100; i++)
+            //for (int i = 0; i < 100; i++)
+            //{
+            //    Console.WriteLine((i, wins));
+            //    wins += Solve(new(10, 10, 15));
+            //}
+
+            //Console.WriteLine(wins);
+
+            Grid grid = new(10, 10, 10);
+
+            grid.OpenCell(grid.SafeCells.FirstOrDefault());
+
+            Console.WriteLine(grid.ShowKnown());
+            foreach (List<Cell> cells in GetGroups(grid))
             {
-                Console.WriteLine((i, wins));
-                wins += Solve(new(10, 10, 15));
+                Console.WriteLine(string.Join(",", cells.Select(i => i.Point.ID).ToArray()));
             }
-
-            Console.WriteLine(wins);
         }
 
         public static List<double> GetWinRateData(int p, int q)
@@ -330,6 +340,49 @@ namespace Minesweeper.Solver
         public static Cell GuessCell(Grid grid)
         {
             return grid.UnknownCells.OrderBy(i => i.AdjacentCells.Count).First();
+        }
+
+        public static List<List<Cell>> GetGroups(Grid grid)
+        {
+            List<List<Cell>> groups = new();
+
+            List<Cell> searchSpace = grid.Cells.Where(cell => grid.UnknownCells.Contains(cell) && cell.AdjacentCells.Intersect(grid.OpenedCells).Any()).ToList();
+            List<Cell> searched = new();
+            List<Cell> toSearch = new();
+
+            List<Cell> auxGroup = new();
+
+            Cell seed = null;
+
+            while (searched.Count < searchSpace.Count)
+            {
+                if (toSearch.Any())
+                {
+                    seed = toSearch.First();
+                    auxGroup.Add(seed);
+                }
+                else
+                {
+                    // add previous island size to sizes
+                    if (searched.Count != 0)
+                    {
+                        groups.Add(auxGroup);
+                        auxGroup = new();
+                    }
+
+                    // select another seed
+                    seed = searchSpace.Except(searched).First();
+                    auxGroup.Add(seed);
+                }
+
+                // add cells if 1) adjacent to seed, 2) in cells, 3) not in searched
+                toSearch.AddRange(seed.AdjacentCells.Intersect(searchSpace).Except(searched).Except(toSearch).ToList());
+                toSearch.Remove(seed);
+                searched.Add(seed);
+            }
+
+            groups.Add(auxGroup);
+            return groups;
         }
     }
 }
