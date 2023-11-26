@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using Microsoft.Z3;
 using System;
 using System.Security.Principal;
+using System.Runtime.CompilerServices;
 
 namespace Minesweeper.Solver
 {
@@ -33,7 +34,35 @@ namespace Minesweeper.Solver
             for (int i = 0; i < 1; i++)
             {
                 Console.WriteLine((i, wins));
-                wins += Solve(new(10, 10, 20));
+                Grid grid = new(10, 10, 10);
+
+                grid.OpenCell(grid.Cells.Where(i => i.MineCount == 0).First());
+
+                Console.WriteLine(grid.ShowKnown() + "\n");
+
+                Interpretation logic = SolveLogic(grid);
+
+                if (!logic.Empty)
+                {
+                    foreach (Cell cell in logic.CellsAssigned)
+                    {
+                        if (logic.Assignments[cell])
+                        {
+                            grid.FlagCell(cell);
+                        }
+                        else
+                        {
+                            grid.OpenCell(cell);
+                        }
+                    }
+                }
+
+                foreach (Cell cell in grid.FlaggedCells)
+                {
+                    Console.WriteLine(cell.Point.ID);
+                }
+
+                Console.WriteLine(grid.ShowKnown() + "\n");
             }
 
             Console.WriteLine(wins);
@@ -94,19 +123,18 @@ namespace Minesweeper.Solver
         {
             while (grid.State == State.ToBegin || grid.State == State.Ongoing)
             {
+                // Check for low hanging fruit
                 LowHangingFruit(grid);
                 
-                List<(Cell, bool)> logic = SolveLogic(grid);
+                // Check for logic
+                Interpretation logic = SolveLogic(grid);
 
-                if (logic.Any())
+                // Update cells
+                if (!logic.Empty)
                 {
-                    Console.WriteLine("logic");
-                    Console.WriteLine(grid.ShowKnown());
-                    Console.WriteLine();
-
-                    foreach ((Cell cell, bool hasMine) in logic)
+                    foreach (Cell cell in logic.CellsAssigned)
                     {
-                        if (hasMine)
+                        if (logic.Assignments[cell] == true)
                         {
                             cell.HasFlag = true;
                         }
@@ -118,10 +146,6 @@ namespace Minesweeper.Solver
                 }
                 else if (grid.State == State.ToBegin || grid.State == State.Ongoing)
                 {
-                    Console.WriteLine("guess");
-                    Console.WriteLine(grid.ShowKnown());
-                    Console.WriteLine();
-
                     Cell guess = GuessCell(grid);
 
                     grid.OpenCell(guess);
@@ -140,6 +164,10 @@ namespace Minesweeper.Solver
             }
         }
 
+        /// <summary>
+        /// Solves for obvious logic.
+        /// </summary>
+        /// <param name="grid">The grid to solve.</param>
         public static void LowHangingFruit(Grid grid)
         {
             bool update = true;
@@ -153,7 +181,7 @@ namespace Minesweeper.Solver
                     List<Cell> adjacentUnknown = cell.AdjacentCells.Intersect(grid.UnknownCells).ToList();
                     List<Cell> adjacentFlagged = cell.AdjacentCells.Intersect(grid.FlaggedCells).ToList();
 
-                    if (adjacentUnknown.Count() + adjacentFlagged.Count() == cell.MineCount)
+                    if (adjacentUnknown.Count + adjacentFlagged.Count == cell.MineCount)
                     {
                         foreach (Cell adjacentUnknownCell in adjacentUnknown)
                         {
@@ -177,98 +205,109 @@ namespace Minesweeper.Solver
         }
 
         /// <summary>
-        /// Gets a list of cells that are guaranteed to be safe or mined.
+        /// Gets a guaranteed <see cref="Interpretation">interpretation</see>.
         /// </summary>
-        /// <param name="grid1"></param>
+        /// <param name="grid">The grid to solve for logic.</param>
         /// <returns></returns>
-        public static List<(Cell, bool)> SolveLogic(Grid grid)
+        public static Interpretation SolveLogic(Grid grid)
         {
             List<Cell> connectedCells = grid.Cells.Where(cell => grid.UnknownCells.Contains(cell) && cell.AdjacentCells.Intersect(grid.OpenedCells).Any()).ToList();
-            List<Cell> relevantKnownCells = grid.OpenedCells.Where(cell => cell.AdjacentCells.Intersect(connectedCells).Any()).ToList();
 
-            List<(int, List<(Cell, bool)>)> allInterpretations = new();
+            Dictionary<int, Interpretation> allInterpretations = new();
 
             // Preliminary check - go through all possible mine counts
             for (int mines = 0; mines <= Math.Min(connectedCells.Count(), grid.Mines - grid.FlaggedCells.Count); mines++)
             {
-                List<(Cell, bool)> interpretation = SolveModel(new(), grid, mines, connectedCells, relevantKnownCells, new());
+                Interpretation interpretation = SolveModel(new(), grid, mines, connectedCells, new());
 
-                if (interpretation.Any())
+                if (!interpretation.Empty)
                 {
-                    allInterpretations.Add((mines, interpretation));
+                    allInterpretations.Add(mines, interpretation);
                 }
             }
 
-            Dictionary<Cell, bool> potentialCells = new();
+            Interpretation potentialCells = new();
 
             // Check for cells with constant interpretations
-            foreach ((int mines, List<(Cell, bool)> interpretation) in allInterpretations)
+            foreach (KeyValuePair<int, Interpretation> kvpAllInt in allInterpretations)
             {
-                foreach ((Cell cell, bool hasMine) in interpretation)
+                Interpretation interpretation = kvpAllInt.Value;
+
+                foreach (KeyValuePair<Cell, bool> kvpInt in interpretation.Assignments)
                 {
-                    if (potentialCells.Keys.Contains(cell) && potentialCells[cell] != hasMine)
+                    Cell cell = kvpInt.Key;
+                    bool hasMine = kvpInt.Value;
+
+                    if (!potentialCells.Contains(cell))
+                    {
+                        potentialCells.Assign(cell, hasMine);
+                    }
+                    else if (potentialCells.Assignments[cell] != hasMine)
                     {
                         potentialCells.Remove(cell);
                     }
-                    else if (!potentialCells.Keys.Contains(cell))
-                    {
-                        potentialCells.Add(cell, hasMine);
-                    }
                 }
             }
 
-            Dictionary<Cell, bool> guaranteedCells = potentialCells.ToDictionary(entry => entry.Key, entry => entry.Value);
+            Interpretation guaranteedCells = potentialCells;
 
             // Try negating the mine status of potential cells
-            foreach (KeyValuePair<Cell, bool> kvp in potentialCells)
+            foreach (KeyValuePair<Cell, bool> kvp in potentialCells.Assignments)
             {
                 Cell cell = kvp.Key;
                 bool hasMine = kvp.Value;
 
-                if (!guaranteedCells.ContainsKey(cell))
+                if (!guaranteedCells.Contains(cell))
                 {
                     continue;
                 }
 
                 for (int mines = 0; mines <= Math.Min(connectedCells.Count(), grid.Mines - grid.FlaggedCells.Count); mines++)
                 {
-                    List<(Cell, bool)> model = SolveModel(new(), grid, mines, connectedCells, relevantKnownCells, new List<(Cell, bool)> { (cell, !hasMine) });
+                    Interpretation model = SolveModel(new(), grid, mines, connectedCells, new List<(Cell, bool)> { (cell, !hasMine) });
 
-                    if (model.Any())
+                    if (model.Empty)
                     {
-                        guaranteedCells.Remove(cell);
+                        continue;
+                    }
 
-                        // further delete any potential cell that had a different value
-                        foreach ((Cell cell1, bool hasMine1) in model)
+                    guaranteedCells.Remove(cell);
+
+                    // further delete any potential cell that had a different value
+                    foreach (KeyValuePair<Cell, bool> assignment in model.Assignments)
+                    {
+                        Cell assignedCell = assignment.Key;
+                        bool assignedHasMine = assignment.Value;
+
+                        if (guaranteedCells.Contains(assignedCell) && hasMine != guaranteedCells.Assignments[assignedCell])
                         {
-                            if (potentialCells.ContainsKey(cell1) && hasMine1 != potentialCells[cell1])
-                            {
-                                guaranteedCells.Remove(cell1);
-                            }
+                            guaranteedCells.Remove(assignedCell);
                         }
                     }
                 }
             }
 
-            return guaranteedCells.Select(kvp => (kvp.Key, kvp.Value)).ToList();
+            return guaranteedCells;
         }
 
         /// <summary>
-        /// Solves a given grid. Intepretation is not guaranteed to be correct.
+        /// Solves a given grid. Interpretation is not guaranteed to be correct.
         /// </summary>
         /// <param name="ctx">The Z3 context.</param>
         /// <param name="grid">The grid to solve.</param>
         /// <param name="totalMines">The total number of mines to consider.</param>
-        /// <param name="connectedCells">A list of unknown cells that are adjacent to an opened cell.</param>
+        /// <param name="searchSpace">A list of unknown cells that are adjacent to an opened cell.</param>
         /// <param name="relevantKnownCells">A list of opened cells that are adjacent to a connected cell.</param>
         /// <param name="constraints">Extra constraints to add.</param>
         /// <returns></returns>
-        public static List<(Cell, bool)> SolveModel(Context ctx, Grid grid, int totalMines, List<Cell> connectedCells, List<Cell> relevantKnownCells, List<(Cell, bool)> constraints)
+        public static Interpretation SolveModel(Context ctx, Grid grid, int totalMines, List<Cell> searchSpace, List<(Cell, bool)> constraints)
         {
-            if (!connectedCells.Any())
+            if (!searchSpace.Any())
             {
                 return new();
             }
+
+            List<Cell> infoCells = grid.OpenedCells.Where(cell => cell.AdjacentCells.Intersect(searchSpace).Any()).ToList();
 
             using (ctx)
             {
@@ -277,12 +316,10 @@ namespace Minesweeper.Solver
 
                 Microsoft.Z3.Solver solver = ctx.MkSolver();
 
-                solver.Set("TEST", false);
-
                 Dictionary<Cell, IntExpr> expressions = new();
 
                 // Initialize variables
-                foreach (Cell cell in connectedCells)
+                foreach (Cell cell in searchSpace)
                 {
                     int id = cell.Point.ID;
                     IntExpr expr = ctx.MkIntConst(id.ToString());
@@ -293,11 +330,11 @@ namespace Minesweeper.Solver
                 }
 
                 // Set up mine count
-                foreach (Cell cell in relevantKnownCells)
+                foreach (Cell cell in infoCells)
                 {
                     int mineCount = (int)cell.MineCount - grid.FlaggedCells.Intersect(cell.AdjacentCells).Count();
 
-                    List<IntExpr> adjacentCells = connectedCells.Intersect(cell.AdjacentCells).Select(i => expressions[i]).ToList();
+                    List<IntExpr> adjacentCells = searchSpace.Intersect(cell.AdjacentCells).Select(i => expressions[i]).ToList();
 
                     solver.Assert(ctx.MkEq(ctx.MkAdd(adjacentCells), ctx.MkInt(mineCount)));
                 }
@@ -308,7 +345,7 @@ namespace Minesweeper.Solver
                 // Add constraints
                 foreach ((Cell cell, bool hasMine) in constraints)
                 {
-                    if (!connectedCells.Contains(cell))
+                    if (!searchSpace.Contains(cell))
                     {
                         continue;
                     }
@@ -319,18 +356,15 @@ namespace Minesweeper.Solver
                 // Return intepretations (if any)
                 if (solver.Check() == Status.SATISFIABLE)
                 {
-                    List<(Cell, bool)> result = new();
+                    Interpretation result = new();
                     Model model = solver.Model;
 
                     foreach (FuncDecl d in model.Decls)
                     {
                         Cell cell = grid.Cells.Where(i => i.Point.ID.ToString() == d.Name.ToString()).First();
                         bool hasMine = model.ConstInterp(d).ToString() == "1" ? true : false;
-
-                        Console.WriteLine((cell.Point.ID, model.ConstInterp(d).ToString()));
-                        result.Add((cell, hasMine));
+                        result.Assign(cell, hasMine);
                     }
-                    Console.WriteLine();
 
                     return result;
                 }
@@ -390,20 +424,11 @@ namespace Minesweeper.Solver
                         // Sum of mines
                         solver.Assert(ctx.MkEq(ctx.MkAdd(expressions.Values), ctx.MkInt(mines)));
 
-                        int countInterpretations = 0;
-
-                        // Return intepretations (if any)
-                        while (countInterpretations <= 10)
+                        if (solver.Check() == Status.SATISFIABLE)
                         {
-                            countInterpretations++;
-
-                            if (solver.Check() != Status.SATISFIABLE)
-                            {
-                                continue;
-                            }
+                            Model model = solver.Model;
 
                             List<(Cell, bool)> result = new();
-                            Model model = solver.Model;
 
                             foreach (FuncDecl d in model.Decls)
                             {
@@ -421,6 +446,55 @@ namespace Minesweeper.Solver
                             {
                                 interpretations.Add(mines, new List<List<(Cell, bool)>> { result });
                             }
+
+                            List<Cell> expressionKey = expressions.Keys.ToList();
+
+                            for (int i = 0; i < expressions.Count; i++)
+                            {
+                                solver.Push();
+
+                                IntExpr expr = expressions[expressionKey[i]];
+                                IntExpr antiEval = ctx.MkInt(model.ConstInterp(expr).ToString() == "1" ? 0 : 1);
+                                solver.Assert(ctx.MkEq(expr, antiEval));
+
+                                for (int j = 0; j < 1; j++)
+                                {
+                                    IntExpr expr1 = expressions[expressionKey[i]];
+                                    IntExpr antiEval1 = ctx.MkInt(model.ConstInterp(expr).ToString() == "1" ? 0 : 1);
+                                    solver.Assert(ctx.MkEq(expr, antiEval));
+                                }
+
+                                solver.Pop();
+                            }
+
+
+                        }
+
+                        int countInterpretations = 0;
+
+                        // Return intepretations (if any)
+                        while (countInterpretations <= group.Count)
+                        {
+                            if (solver.Check() != Status.SATISFIABLE)
+                            {
+                                continue;
+                            }
+
+                            countInterpretations++;
+                            Console.WriteLine(countInterpretations);
+
+                            
+                            Model model = solver.Model;
+
+                            foreach (FuncDecl d in model.Decls)
+                            {
+                                Cell cell = grid.Cells.Where(i => i.Point.ID.ToString() == d.Name.ToString()).First();
+                                bool hasMine = model.ConstInterp(d).ToString() == "1" ? true : false;
+
+                                //result.Add((cell, hasMine));
+                            }
+
+
 
                             List<BoolExpr> block = new();
 
@@ -521,33 +595,6 @@ namespace Minesweeper.Solver
             return pSafety.MaxBy(kvp => kvp.Value).Key;
         }
 
-        public static long nCr(int n, int r)
-        {
-            // naive: return Factorial(n) / (Factorial(r) * Factorial(n - r));
-            return nPr(n, r) / Factorial(r);
-        }
-
-        public static long nPr(int n, int r)
-        {
-            // naive: return Factorial(n) / Factorial(n - r);
-            return FactorialDivision(n, n - r);
-        }
-
-        private static long FactorialDivision(int topFactorial, int divisorFactorial)
-        {
-            long result = 1;
-            for (int i = topFactorial; i > divisorFactorial; i--)
-                result *= i;
-            return result;
-        }
-
-        private static long Factorial(int i)
-        {
-            if (i <= 1)
-                return 1;
-            return i * Factorial(i - 1);
-        }
-
         public static List<List<Cell>> GetGroups(Grid grid)
         {
             List<List<Cell>> groups = new();
@@ -592,6 +639,33 @@ namespace Minesweeper.Solver
                 groups.Add(auxGroup);
             }
             return groups;
+        }
+
+        public static long nCr(int n, int r)
+        {
+            // naive: return Factorial(n) / (Factorial(r) * Factorial(n - r));
+            return nPr(n, r) / Factorial(r);
+        }
+
+        public static long nPr(int n, int r)
+        {
+            // naive: return Factorial(n) / Factorial(n - r);
+            return FactorialDivision(n, n - r);
+        }
+
+        private static long FactorialDivision(int topFactorial, int divisorFactorial)
+        {
+            long result = 1;
+            for (int i = topFactorial; i > divisorFactorial; i--)
+                result *= i;
+            return result;
+        }
+
+        private static long Factorial(int i)
+        {
+            if (i <= 1)
+                return 1;
+            return i * Factorial(i - 1);
         }
     }
 }
