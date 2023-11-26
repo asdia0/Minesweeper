@@ -4,6 +4,7 @@ using System.Linq;
 using Newtonsoft.Json;
 using Microsoft.Z3;
 using System;
+using System.Security.Principal;
 
 namespace Minesweeper.Solver
 {
@@ -276,6 +277,8 @@ namespace Minesweeper.Solver
 
                 Microsoft.Z3.Solver solver = ctx.MkSolver();
 
+                solver.Set("TEST", false);
+
                 Dictionary<Cell, IntExpr> expressions = new();
 
                 // Initialize variables
@@ -324,8 +327,10 @@ namespace Minesweeper.Solver
                         Cell cell = grid.Cells.Where(i => i.Point.ID.ToString() == d.Name.ToString()).First();
                         bool hasMine = model.ConstInterp(d).ToString() == "1" ? true : false;
 
+                        Console.WriteLine((cell.Point.ID, model.ConstInterp(d).ToString()));
                         result.Add((cell, hasMine));
                     }
+                    Console.WriteLine();
 
                     return result;
                 }
@@ -385,9 +390,18 @@ namespace Minesweeper.Solver
                         // Sum of mines
                         solver.Assert(ctx.MkEq(ctx.MkAdd(expressions.Values), ctx.MkInt(mines)));
 
+                        int countInterpretations = 0;
+
                         // Return intepretations (if any)
-                        while (interpretations.Count < 10 && solver.Check() == Status.SATISFIABLE)
+                        while (countInterpretations <= 10)
                         {
+                            countInterpretations++;
+
+                            if (solver.Check() != Status.SATISFIABLE)
+                            {
+                                continue;
+                            }
+
                             List<(Cell, bool)> result = new();
                             Model model = solver.Model;
 
@@ -419,56 +433,92 @@ namespace Minesweeper.Solver
 
                             solver.Assert(ctx.MkOr(block));
                         }
+
+                        //Console.WriteLine("interps: " + interpretations.Count);
                     }
                 }
             }
 
-            Dictionary<Cell, double> safety = new();
+            Dictionary<Cell, long> safety = new();
             long total = 0;
 
-
-            foreach (KeyValuePair<int, List<List<(Cell, bool)>>> kvp in interpretations)
+            foreach (List<Cell> group in groups)
             {
-                int mines = kvp.Key;
+                List<int> mineCounts = new();
+                List<List<(Cell, bool)>> groupInterps = new();
 
-                Console.WriteLine(mines);
-
-                List<List<(Cell, bool)>> interps = kvp.Value;
-
-                foreach (Cell cell in interps.SelectMany(i => i.Select(i => i.Item1)))
+                foreach (KeyValuePair<int, List<List<(Cell, bool)>>> kvp in interpretations)
                 {
-                    int numSafe = 0;
+                    Dictionary<Cell, int> countSafe = new();
 
-                    foreach (List<(Cell, bool)> interp in interps)
+                    int mineCount = kvp.Key;
+
+                    List<List<(Cell, bool)>> variations = kvp.Value.Where(i => i.Select(i => i.Item1).Intersect(group).Any()).ToList();
+
+                    //Console.WriteLine((grid.UnknownCells.Count - group.Count, grid.Mines - mineCount));
+                    //Console.WriteLine();
+                    long mult = nCr(grid.UnknownCells.Count - group.Count, grid.Mines - mineCount);
+                    total += kvp.Value.Count * mult;
+
+                    foreach (List<(Cell, bool)> variation in variations)
                     {
-                        numSafe += interp.Contains((cell, false)) ? 1 : 0;
+                        foreach ((Cell cell, bool hasMine) in variation)
+                        {
+                            if (!hasMine)
+                            {
+                                if (countSafe.ContainsKey(cell))
+                                {
+                                    countSafe[cell]++;
+                                }
+                                else
+                                {
+                                    countSafe[cell] = 1;
+                                }
+                            }
+                        }
                     }
 
-                    List<Cell> group = groups.Where(i => i.Contains(cell)).First();
-                    long mult = nCr(grid.UnknownCells.Count - group.Count, grid.Mines - mines);
-
-                    total += mult;
-
-                    if (safety.ContainsKey(cell))
+                    foreach (Cell cell in group)
                     {
-                        safety[cell] += mult * numSafe;
-                    }
-                    else
-                    {
-                        safety.Add(cell, mult * numSafe);
+                        if (!countSafe.ContainsKey(cell))
+                        {
+                            countSafe[cell] = 0;
+                        }
+
+                        if (safety.ContainsKey(cell))
+                        {
+                            safety[cell] += countSafe[cell] * mult;
+                        }
+                        else
+                        {
+                            safety.Add(cell, countSafe[cell] * mult);
+                        }
                     }
                 }
             }
 
-            // floating cell probability
-            double pSafetyFloat = safety.Select(i => i.Value).Sum() / total;
-            foreach (Cell floatingCell in grid.UnknownCells.Where(i => !i.AdjacentCells.Intersect(grid.OpenedCells).Any()))
+            foreach (KeyValuePair<Cell, long> kvp in safety)
             {
-                safety.Add(floatingCell, pSafetyFloat);
+                pSafety[kvp.Key] = (double)kvp.Value / total;
             }
 
+            List<Cell> connectedCell = grid.UnknownCells.Where(i => i.AdjacentCells.Intersect(grid.OpenedCells).Any()).ToList();
+            double expectedMines = connectedCell.Count - pSafety.Values.Sum();
 
-            return safety.MaxBy(kvp => kvp.Value).Key;
+            //Console.WriteLine(expectedMines);
+
+            List<Cell> floatingCells = grid.UnknownCells.Where(i => !i.AdjacentCells.Intersect(grid.OpenedCells).Any()).ToList();
+            foreach (Cell cell in floatingCells)
+            {
+                pSafety[cell] = 1 - (grid.Mines - (int)expectedMines) / (double)floatingCells.Count;
+            }
+
+            foreach (KeyValuePair<Cell, double> kvp in pSafety)
+            {
+                //Console.WriteLine((kvp.Key.Point.ID, kvp.Value));
+            }
+
+            return pSafety.MaxBy(kvp => kvp.Value).Key;
         }
 
         public static long nCr(int n, int r)
