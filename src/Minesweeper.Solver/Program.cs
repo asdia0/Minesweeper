@@ -27,25 +27,15 @@ namespace Minesweeper.Solver
             //string json = JsonConvert.SerializeObject(data, Formatting.Indented);
             //File.WriteAllText("data.json", json);
 
-            //int wins = 0;
+            int wins = 0;
 
-            //for (int i = 0; i < 100; i++)
-            //{
-            //    Console.WriteLine((i, wins));
-            //    wins += Solve(new(10, 10, 15));
-            //}
-
-            //Console.WriteLine(wins);
-
-            Grid grid = new(10, 10, 10);
-
-            grid.OpenCell(grid.SafeCells.FirstOrDefault());
-
-            Console.WriteLine(grid.ShowKnown());
-            foreach (List<Cell> cells in GetGroups(grid))
+            for (int i = 0; i < 1; i++)
             {
-                Console.WriteLine(string.Join(",", cells.Select(i => i.Point.ID).ToArray()));
+                Console.WriteLine((i, wins));
+                wins += Solve(new(10, 10, 20));
             }
+
+            Console.WriteLine(wins);
         }
 
         public static List<double> GetWinRateData(int p, int q)
@@ -103,15 +93,16 @@ namespace Minesweeper.Solver
         {
             while (grid.State == State.ToBegin || grid.State == State.Ongoing)
             {
-                Console.WriteLine(grid.ShowKnown());
-                Console.WriteLine();
-
                 LowHangingFruit(grid);
                 
                 List<(Cell, bool)> logic = SolveLogic(grid);
 
                 if (logic.Any())
                 {
+                    Console.WriteLine("logic");
+                    Console.WriteLine(grid.ShowKnown());
+                    Console.WriteLine();
+
                     foreach ((Cell cell, bool hasMine) in logic)
                     {
                         if (hasMine)
@@ -126,11 +117,17 @@ namespace Minesweeper.Solver
                 }
                 else if (grid.State == State.ToBegin || grid.State == State.Ongoing)
                 {
+                    Console.WriteLine("guess");
+                    Console.WriteLine(grid.ShowKnown());
+                    Console.WriteLine();
+
                     Cell guess = GuessCell(grid);
 
                     grid.OpenCell(guess);
                 }
             }
+
+            Console.WriteLine(grid.ShowKnown());
 
             if (grid.State == State.Success)
             {
@@ -339,7 +336,166 @@ namespace Minesweeper.Solver
     
         public static Cell GuessCell(Grid grid)
         {
-            return grid.UnknownCells.OrderBy(i => i.AdjacentCells.Count).First();
+            List<List<Cell>> groups = GetGroups(grid);
+
+            if (!groups.Any())
+            {
+                return grid.UnknownCells.OrderBy(i => i.AdjacentCells.Count).First();
+            }
+
+            Dictionary<Cell, double> pSafety = new();
+
+            Dictionary<int, List<List<(Cell, bool)>>> interpretations = new();
+
+            foreach (List<Cell> group in groups)
+            {
+                for (int mines = 0; mines < Math.Min(group.Count, grid.Mines); mines++)
+                {
+                    using (Context ctx = new())
+                    {
+                        IntExpr fakeTrue = ctx.MkInt(1);
+                        IntExpr fakeFalse = ctx.MkInt(0);
+
+                        Microsoft.Z3.Solver solver = ctx.MkSolver();
+
+                        Dictionary<Cell, IntExpr> expressions = new();
+
+                        // Initialize variables
+                        foreach (Cell cell in group)
+                        {
+                            int id = cell.Point.ID;
+                            IntExpr expr = ctx.MkIntConst(id.ToString());
+                            expressions.Add(cell, expr);
+
+                            // Make sure each expressions are "boolean"
+                            solver.Assert(ctx.MkOr(ctx.MkEq(expr, fakeTrue), ctx.MkEq(expr, fakeFalse)));
+                        }
+
+                        // Set up mine count
+                        List<Cell> relevantKnownCells = grid.OpenedCells.Where(i => i.AdjacentCells.Intersect(group).Any()).ToList();
+                        foreach (Cell cell in relevantKnownCells)
+                        {
+                            int mineCount = (int)cell.MineCount - grid.FlaggedCells.Intersect(cell.AdjacentCells).Count();
+
+                            List<IntExpr> adjacentCells = group.Intersect(cell.AdjacentCells).Select(i => expressions[i]).ToList();
+
+                            solver.Assert(ctx.MkEq(ctx.MkAdd(adjacentCells), ctx.MkInt(mineCount)));
+                        }
+
+                        // Sum of mines
+                        solver.Assert(ctx.MkEq(ctx.MkAdd(expressions.Values), ctx.MkInt(mines)));
+
+                        // Return intepretations (if any)
+                        while (interpretations.Count < 10 && solver.Check() == Status.SATISFIABLE)
+                        {
+                            List<(Cell, bool)> result = new();
+                            Model model = solver.Model;
+
+                            foreach (FuncDecl d in model.Decls)
+                            {
+                                Cell cell = grid.Cells.Where(i => i.Point.ID.ToString() == d.Name.ToString()).First();
+                                bool hasMine = model.ConstInterp(d).ToString() == "1" ? true : false;
+
+                                result.Add((cell, hasMine));
+                            }
+
+                            if (interpretations.Keys.Contains(mines))
+                            {
+                                interpretations[mines].Add(result);
+                            }
+                            else
+                            {
+                                interpretations.Add(mines, new List<List<(Cell, bool)>> { result });
+                            }
+
+                            List<BoolExpr> block = new();
+
+                            foreach (FuncDecl d in model.Decls)
+                            {
+                                IntExpr c = ctx.MkInt(d.Name.ToString());
+                                IntExpr eval = ctx.MkInt(model.ConstInterp(d).ToString() == "1" ? 0 : 1);
+                                block.Add(ctx.MkEq(c, eval));
+                            }
+
+                            solver.Assert(ctx.MkOr(block));
+                        }
+                    }
+                }
+            }
+
+            Dictionary<Cell, double> safety = new();
+            long total = 0;
+
+
+            foreach (KeyValuePair<int, List<List<(Cell, bool)>>> kvp in interpretations)
+            {
+                int mines = kvp.Key;
+
+                Console.WriteLine(mines);
+
+                List<List<(Cell, bool)>> interps = kvp.Value;
+
+                foreach (Cell cell in interps.SelectMany(i => i.Select(i => i.Item1)))
+                {
+                    int numSafe = 0;
+
+                    foreach (List<(Cell, bool)> interp in interps)
+                    {
+                        numSafe += interp.Contains((cell, false)) ? 1 : 0;
+                    }
+
+                    List<Cell> group = groups.Where(i => i.Contains(cell)).First();
+                    long mult = nCr(grid.UnknownCells.Count - group.Count, grid.Mines - mines);
+
+                    total += mult;
+
+                    if (safety.ContainsKey(cell))
+                    {
+                        safety[cell] += mult * numSafe;
+                    }
+                    else
+                    {
+                        safety.Add(cell, mult * numSafe);
+                    }
+                }
+            }
+
+            // floating cell probability
+            double pSafetyFloat = safety.Select(i => i.Value).Sum() / total;
+            foreach (Cell floatingCell in grid.UnknownCells.Where(i => !i.AdjacentCells.Intersect(grid.OpenedCells).Any()))
+            {
+                safety.Add(floatingCell, pSafetyFloat);
+            }
+
+
+            return safety.MaxBy(kvp => kvp.Value).Key;
+        }
+
+        public static long nCr(int n, int r)
+        {
+            // naive: return Factorial(n) / (Factorial(r) * Factorial(n - r));
+            return nPr(n, r) / Factorial(r);
+        }
+
+        public static long nPr(int n, int r)
+        {
+            // naive: return Factorial(n) / Factorial(n - r);
+            return FactorialDivision(n, n - r);
+        }
+
+        private static long FactorialDivision(int topFactorial, int divisorFactorial)
+        {
+            long result = 1;
+            for (int i = topFactorial; i > divisorFactorial; i--)
+                result *= i;
+            return result;
+        }
+
+        private static long Factorial(int i)
+        {
+            if (i <= 1)
+                return 1;
+            return i * Factorial(i - 1);
         }
 
         public static List<List<Cell>> GetGroups(Grid grid)
@@ -381,7 +537,10 @@ namespace Minesweeper.Solver
                 searched.Add(seed);
             }
 
-            groups.Add(auxGroup);
+            if (auxGroup.Any())
+            {
+                groups.Add(auxGroup);
+            }
             return groups;
         }
     }
