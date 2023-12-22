@@ -8,7 +8,7 @@ namespace Minesweeper.Solver
     /// </summary>
     /// <param name="variables"></param>
     /// <param name="sum"></param>
-    public class Constraint(HashSet<int> variables, int sum)
+    public struct Constraint(HashSet<int> variables, int sum)
     {
         /// <summary>
         /// A list of binary variables.
