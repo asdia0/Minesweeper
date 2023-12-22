@@ -95,6 +95,40 @@
             }
         }
 
+        public List<Cell> Openings
+        {
+            get
+            {
+                return this.Cells.Where(cell => cell.MineCount == 0).ToList();
+            }
+        }
+
+        public List<Cell> BoundaryCells
+        {
+            get
+            {
+                return this.OpenedCells.Where(cell => cell.AdjacentCells.Intersect(this.UnknownCells).Any()).ToList();
+            }
+        }
+
+        public List<Cell> ExposedCells
+        {
+            get
+            {
+                return this.UnknownCells
+                    .Where(cell => cell.AdjacentCells.Intersect(this.OpenedCells).Any())
+                    .ToList();
+            }
+        }
+
+        public List<Cell> FloatingCells
+        {
+            get
+            {
+                return this.UnknownCells.Except(this.ExposedCells).ToList();
+            }
+        }
+
         /// <summary>
         /// Gets the <see cref="State">state</see> of the <see cref="Grid">grid</see>.
         /// </summary>
