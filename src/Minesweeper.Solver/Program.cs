@@ -74,7 +74,7 @@ namespace Minesweeper.Solver
             {
                 Solver solver = new(grid);
 
-                solver.SolveLogic();
+                solver.Solve();
 
                 bool hasLogic = solver.Solutions.Any();
 

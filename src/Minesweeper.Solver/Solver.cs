@@ -1,181 +1,206 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks.Dataflow;
-using Newtonsoft.Json;
 
 namespace Minesweeper.Solver
 {
     public class Solver
     {
-        public List<Equation> Equations { get; set; }
+        /// <summary>
+        /// A list of <see cref="Constraint"/>s to infer from.
+        /// </summary>
+        public List<Constraint> Constraints { get; set; }
 
+        /// <summary>
+        /// A list of solutions to the given constraints.
+        /// </summary>
         public List<(int, int)> Solutions { get; set; }
 
         public Solver(Grid grid)
         {
-            Equations = new();
-            Solutions = new();
+            Constraints = [];
+            Solutions = [];
 
-            // Set up local constraint
+            // Set up local constraints
             foreach (Cell boundaryCell in grid.OpenedCells.Where(i => i.AdjacentCells.Intersect(grid.UnknownCells).Any()))
             {
-                HashSet<int> cellVariables = new();
+                HashSet<int> cellVariables = [];
 
                 foreach (Cell adjacentExposedCell in boundaryCell.AdjacentCells.Intersect(grid.UnknownCells))
                 {
                     cellVariables.Add(adjacentExposedCell.Point.ID);
                 }
 
-                Equations.Add(new(cellVariables, (int)boundaryCell.MineCount - boundaryCell.AdjacentCells.Intersect(grid.FlaggedCells).Count()));
+                Constraints.Add(new(cellVariables, (int)boundaryCell.MineCount - boundaryCell.AdjacentCells.Intersect(grid.FlaggedCells).Count()));
             }
-
-            //Console.WriteLine(string.Join("\n", Equations.Select(i => (string.Join(",", i.Variables), i.Sum))));
 
             // Set up global constraint (check if minecounting available)
         }
 
-        public void SolveLogic()
+        /// <summary>
+        /// Solves the given constraints.
+        /// </summary>
+        public void Solve()
         {
             bool run = true;
 
-            List<Equation> previousEquations = new();
+            List<Constraint> oldConstraints = [];
 
-            RemoveEquations();
+            RemoveUnnecessaryConstraints();
 
+            // Only stop running when no new constraints can be constructed.
             while (run)
             {
-                GetLowHangingFruit();
-                GenerateNewEquations();
+                AllSafeOrMined();
+                ConstructNewConstraints();
                 UpdateSolvedVariables();
-                RemoveEquations();
+                RemoveUnnecessaryConstraints();
 
-                bool runTemp = Equations.Except(previousEquations).Any();
+                bool runTemp = Constraints.Except(oldConstraints).Any();
 
-                previousEquations = Equations;
+                oldConstraints = Constraints;
 
                 run = runTemp;
             }
         }
 
-        public void GetLowHangingFruit()
+        /// <summary>
+        /// Sets all variables in a constraint to be safe or mined, depending on <see cref="Constraint.Sum"/>.
+        /// </summary>
+        public void AllSafeOrMined()
         {
-            foreach (Equation equation in Equations.ToList())
+            foreach (Constraint constraint in Constraints.ToList())
             {
-                if (equation.Sum == 0)
-                {
-                    foreach (int variable in equation.Variables)
-                    {
-                        Equations.Add(new(new() { variable }, 0));
-                    }
-                }
-                else if (equation.Sum == equation.Variables.Count)
-                {
-                    foreach (int variable in equation.Variables)
-                    {
-                        Equations.Add(new(new() { variable }, 1));
-                    }
+                int sum = 0;
 
-                    Equations.Remove(equation);
+                if (constraint.Sum == 0)
+                {
+                    // Sum already 0
+                }
+                else if (constraint.Sum == constraint.Variables.Count)
+                {
+                    sum = 1;
+                }
+                else
+                {
+                    continue;
+                }
+
+                foreach (int variable in constraint.Variables)
+                {
+                    Constraints.Add(new([variable], sum));
+                }
+
+                Constraints.Remove(constraint);
+            }
+        }
+
+        /// <summary>
+        /// Removes all unnecessary constraints.
+        /// </summary>
+        public void RemoveUnnecessaryConstraints()
+        {
+            RemoveEmptyConstraints();
+            RemoveDuplicateConstraints();
+        }
+
+        /// <summary>
+        /// Removes all constraints that have no variables.
+        /// </summary>
+        public void RemoveEmptyConstraints()
+        {
+            foreach (Constraint constraint in Constraints.ToList())
+            {
+                if (constraint.Variables.Count == 0)
+                {
+                    Constraints.Remove(constraint);
                 }
             }
         }
 
-        public void RemoveEquations()
+        /// <summary>
+        /// Removes all duplicate constraints.
+        /// </summary>
+        public void RemoveDuplicateConstraints()
         {
-            RemoveEmptyEquations();
-            RemoveDuplicates();
-        }
+            int constraintsCount = Constraints.Count;
+            List<Constraint> tempConstraints = [.. Constraints];
 
-        public void RemoveEmptyEquations()
-        {
-            foreach (Equation equation in Equations.ToList())
+            for (int i = 0; i < constraintsCount; i++)
             {
-                if (equation.Variables.Count == 0)
+                for (int j = i; j < constraintsCount; j++)
                 {
-                    Equations.Remove(equation);
-                }
-            }
-        }
-
-        public void RemoveDuplicates()
-        {
-            int equationsCount = Equations.Count;
-            List<Equation> tempEquations = Equations.ToList();
-
-            for (int i = 0; i < equationsCount; i++)
-            {
-                for (int j = i; j < equationsCount; j++)
-                {
-                    if (i != j && tempEquations[i] == tempEquations[j])
+                    if (i != j && tempConstraints[i] == tempConstraints[j])
                     {
-                        Equations.Remove(tempEquations[i]);
+                        Constraints.Remove(tempConstraints[i]);
                     }
                 }
             }
         }
 
-        public void GenerateNewEquations()
+        /// <summary>
+        /// Constructs new constraints based on the existing constraints.
+        /// For example, the constraints A+B=1 and A=1 will result in a new constraint B=0.
+        /// </summary>
+        public void ConstructNewConstraints()
         {
-            int equationsCount = Equations.Count;
+            int constraintCount = Constraints.Count;
 
-            for (int i = 0; i < equationsCount; i++)
+            for (int i = 0; i < constraintCount; i++)
             {
-                for (int j = 0; j < equationsCount; j++)
+                for (int j = 0; j < constraintCount; j++)
                 {
                     if (i == j)
                     {
                         continue;
                     }
 
-                    bool canSubtract = Equations[i].Subtract(Equations[j], out Equation newEquation);
+                    bool canSubtract = Constraints[i].Subtract(Constraints[j], out Constraint newConstraint);
 
                     if (canSubtract)
                     {
-                        Equations.Add(newEquation);
+                        Constraints.Add(newConstraint);
                     }
                 }
             }
         }
 
+        /// <summary>
+        /// Add solved constraints to <see cref="Solutions"/>.
+        /// </summary>
         public void UpdateSolvedVariables()
         {
-            foreach (Equation equation in Equations)
+            foreach (Constraint constraint in Constraints)
             {
-                if (!equation.Solved)
+                if (!constraint.Solved)
                 {
                     continue;
                 }
 
-                int ID = equation.Variables.First();
-                int sum = equation.Sum;
+                int ID = constraint.Variables.First();
+                int sum = constraint.Sum;
 
-                AddNewSolution(ID, sum);
+                if (Solutions.Where(i => i.Item1 == ID).Any())
+                {
+                    return;
+                }
+
+                Solutions.Add((ID, sum));
             }
 
-            foreach (Equation equation in Equations)
+            foreach (Constraint constraint in Constraints)
             {
-                foreach ((int ID, int sum) in this.Solutions)
+                foreach ((int ID, int sum) in Solutions)
                 {
-                    if (!equation.Variables.Contains(ID))
+                    if (!constraint.Variables.Contains(ID))
                     {
                         continue;
                     }
 
-                    equation.Variables.Remove(ID);
-                    equation.Sum -= sum;
+                    constraint.Variables.Remove(ID);
+                    constraint.Sum -= sum;
                 }
             }
-        }
-
-        public void AddNewSolution(int ID, int sum)
-        {
-            if (Solutions.Where(i => i.Item1 == ID).Any())
-            {
-                return;
-            }
-
-            Solutions.Add((ID, sum));
         }
     }
 }
