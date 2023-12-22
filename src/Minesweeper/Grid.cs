@@ -136,20 +136,20 @@
         {
             get
             {
-                // Game is yet to begin; no action has been committed.
-                if (!this.FlaggedCells.Union(this.OpenedCells).Any())
+                // Game is yet to begin; all cells are unknown.
+                if (this.UnknownCells.Count == this.Length * this.Width)
                 {
                     return State.ToBegin;
                 }
 
-                // Game lost; a miend cell has been opened.
+                // Game lost; a mined cell has been opened.
                 if (this.OpenedCells.Where(cell => cell.HasMine).Any())
                 {
                     return State.Fail;
                 }
 
                 // Game won; all safe cells have been opened.
-                if (!this.UnknownCells.Any())
+                if (!this.SafeCells.Where(i => !i.IsOpen).Any())
                 {
                     return State.Success;
                 }
@@ -220,10 +220,10 @@
                 // If the first click has a mine, switch it with another cell.
                 if (cell.HasMine)
                 {
-                    cell.HasMine = false;
-
                     Random rng = new();
                     this.SafeCells[rng.Next(this.SafeCells.Count)].HasMine = true;
+
+                    cell.HasMine = false;
                 }
             }
 

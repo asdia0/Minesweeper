@@ -38,7 +38,7 @@ namespace Minesweeper.Solver
         }
 
         /// <summary>
-        /// Solves the given constraints.
+        /// Solves the given constraints. Solutions can be accessed via <see cref="Solutions"/>.
         /// </summary>
         public void Solve()
         {

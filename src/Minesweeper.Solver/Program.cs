@@ -1,73 +1,132 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace Minesweeper.Solver
 {
     public class Program
     {
+        public static string FileName = "RawWinData.csv";
+
+        public static int MaxAttempts = 10000;
+
         public static void Main()
         {
-            Console.WriteLine(GetWinRate(16, 16, 40));
+            //Grid grid = new(1, 3, 1);
+            //Solve(grid);
+            Main1();
         }
 
-        public static List<double> GetWinRateData(int p, int q)
+        public static void Main1()
         {
-            List<double> winRates = [];
-            bool killWinRate = false;
+            Console.Write("Max dimension: ");
+            int maxDimensions = Console.ReadLine()
+                .Split(",")
+                .Select(i => int.Parse(i))
+                .First();
+            Console.WriteLine();
 
-            for (int m = 0; m < p * q; m++)
+            Console.WriteLine($"Reading from {FileName}...");
+
+            List<(int, int, int)> completedDimensions = [];
+
+            using (StreamReader reader = new(FileName))
             {
-                if (killWinRate)
+                while (!reader.EndOfStream)
                 {
-                    winRates.Add(0);
-                }
+                    string line = reader.ReadLine();
 
-                winRates.Add(GetWinRate(p, q, m + 1));
+                    if (line == null)
+                    {
+                        continue;
+                    }
 
-                // Set all subsequent winrates to 0
-                if (m > 0.75 * p * q && winRates[m] > winRates[m - 1])
-                {
-                    winRates[m] = 0;
-                    killWinRate = true;
+                    List<string> information = [.. line.Split(",")];
+
+                    int p = int.Parse(information[0]);
+                    int q = int.Parse(information[1]);
+                    int m = int.Parse(information[2]);
+                    double winRate = double.Parse(information[3]);
+
+                    completedDimensions.Add((p, q, m));
                 }
             }
 
-            return winRates;
+            List<(int, int, int)> remainingDimensions = GetValidDimensions(maxDimensions)
+                .Except(completedDimensions)
+                .ToList();
+
+            foreach ((int, int, int) dimension in remainingDimensions)
+            {
+                GetWinRate(dimension.Item1, dimension.Item2, dimension.Item3);
+            }
         }
 
-        public static double GetWinRate(int length, int width, int mines)
+        public static List<(int, int, int)> GetValidDimensions(int maxDim)
+        {
+            List<(int, int, int)> res = [];
+
+            for (int i = 1; i <= maxDim; i++)
+            {
+                for (int j = i; j <= maxDim; j++)
+                {
+                    for (int m = 1; m < i * j; m++)
+                    {
+                        res.Add((i, j, m));
+                    }
+                }
+            }
+
+            return res;
+        }
+
+        public static void GetWinRate(int length, int width, int mines)
         {
             int wins = 0;
-            double previousWinRate = 0;
+            decimal previousWinRate = 0;
             int streak = 0;
 
-            //for (int i = 1; i <= 10000; i++)
-            for (int i = 1; i <= 1000; i++)
+            Console.WriteLine("---");
+
+            for (int i = 1; i <= MaxAttempts; i++)
             {
                 if (i % 100 == 0)
                 {
-                    Console.WriteLine(i);
+                    Console.WriteLine($"{length}x{width}/{mines}, {wins} wins, {i} attempts");
                 }
 
                 wins += Solve(new(length, width, mines));
-                double currentWinRate = (double)wins / i;
+                decimal currentWinRate = (decimal)wins / i;
                 if (previousWinRate == currentWinRate)
                 {
                     streak++;
                     if (streak == 50 && i > 2500)
                     {
-                        return currentWinRate;
+                        EndDimension(length, width, mines, currentWinRate);
                     }
                 }
                 previousWinRate = currentWinRate;
             }
 
-            return previousWinRate;
+            EndDimension(length, width, mines, previousWinRate);
         }
+
+        public static void EndDimension(int length, int width, int mines, decimal winrate)
+        {
+            using (StreamWriter sw = File.AppendText(FileName))
+            {
+                sw.WriteLine($"{length},{width},{mines},{winrate}");
+            }
+        }
+
 
         public static int Solve(Grid grid)
         {
+            // Start at corner.
+            grid.OpenCell(grid.Cells[0]);
+
             while (grid.State == State.ToBegin || grid.State == State.Ongoing)
             {
                 Solver solver = new(grid);
@@ -96,12 +155,15 @@ namespace Minesweeper.Solver
                         }
                     }
                 }
-                else if (grid.State == State.ToBegin || grid.State == State.Ongoing)
+                else
                 {
                     Random rng = new();
                     Cell guess = grid.UnknownCells[rng.Next(grid.UnknownCells.Count)];
 
                     grid.OpenCell(guess);
+
+                    //Console.WriteLine(grid.ShowKnown());
+                    //Console.WriteLine();
                 }
             }
 
