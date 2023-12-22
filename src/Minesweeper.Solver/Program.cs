@@ -1,21 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
-using Newtonsoft.Json;
 
 namespace Minesweeper.Solver
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static void Main()
         {
             Console.WriteLine(GetWinRate(16, 16, 40));
         }
 
         public static List<double> GetWinRateData(int p, int q)
         {
-            List<double> winRates = new();
+            List<double> winRates = [];
             bool killWinRate = false;
 
             for (int m = 0; m < p * q; m++)
@@ -81,11 +79,11 @@ namespace Minesweeper.Solver
                 // Update cells
                 if (hasLogic)
                 {
-                    foreach ((int id, int sum) in solver.Solutions)
+                    foreach (Solution solution in solver.Solutions)
                     {
-                        Cell cell = grid.Cells.Where(i => i.Point.ID == id).First();
+                        Cell cell = grid.Cells.Where(i => i.Point.ID == solution.ID).First();
 
-                        switch (sum)
+                        switch (solution.Assignment)
                         {
                             case 0:
                                 grid.OpenCell(cell);
@@ -100,16 +98,12 @@ namespace Minesweeper.Solver
                 }
                 else if (grid.State == State.ToBegin || grid.State == State.Ongoing)
                 {
-                    //Cell guess = GuessCell(grid);
-
                     Random rng = new();
                     Cell guess = grid.UnknownCells[rng.Next(grid.UnknownCells.Count)];
 
                     grid.OpenCell(guess);
                 }
             }
-
-            //Console.WriteLine(grid.ShowKnown());
 
             if (grid.State == State.Success)
             {

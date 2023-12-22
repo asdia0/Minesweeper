@@ -14,7 +14,7 @@ namespace Minesweeper.Solver
         /// <summary>
         /// A list of solutions to the given constraints.
         /// </summary>
-        public List<(int, int)> Solutions { get; set; }
+        public List<Solution> Solutions { get; set; }
 
         public Solver(Grid grid)
         {
@@ -180,25 +180,27 @@ namespace Minesweeper.Solver
                 int ID = constraint.Variables.First();
                 int sum = constraint.Sum;
 
-                if (Solutions.Where(i => i.Item1 == ID).Any())
+                if (Solutions.Where(solution => solution.ID == ID).Any())
                 {
                     return;
                 }
 
-                Solutions.Add((ID, sum));
+                Solutions.Add(new Solution(ID, sum));
             }
 
             foreach (Constraint constraint in Constraints)
             {
-                foreach ((int ID, int sum) in Solutions)
+                foreach (Solution solution in Solutions)
                 {
+                    int ID = solution.ID;
+
                     if (!constraint.Variables.Contains(ID))
                     {
                         continue;
                     }
 
                     constraint.Variables.Remove(ID);
-                    constraint.Sum -= sum;
+                    constraint.Sum -= solution.Assignment;
                 }
             }
         }
