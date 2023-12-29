@@ -24,13 +24,10 @@ namespace Minesweeper.Solver
             // Set up local constraints
             foreach (Cell boundaryCell in grid.OpenedCells.Where(i => i.AdjacentCells.Intersect(grid.UnknownCells).Any()))
             {
-                HashSet<int> cellVariables = [];
-
-                foreach (Cell adjacentExposedCell in boundaryCell.AdjacentCells.Intersect(grid.UnknownCells))
-                {
-                    cellVariables.Add(adjacentExposedCell.Point.ID);
-                }
-
+                HashSet<int> cellVariables = boundaryCell.AdjacentCells
+                    .Intersect(grid.UnknownCells)
+                    .Select(i => i.Point.ID)
+                    .ToHashSet();
                 Constraints.Add(new(cellVariables, (int)boundaryCell.MineCount - boundaryCell.AdjacentCells.Intersect(grid.FlaggedCells).Count()));
             }
 
