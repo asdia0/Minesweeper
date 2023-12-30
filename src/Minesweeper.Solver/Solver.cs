@@ -125,9 +125,9 @@ namespace Minesweeper.Solver
 
             for (int i = 0; i < constraintsCount; i++)
             {
-                for (int j = i; j < constraintsCount; j++)
+                for (int j = i + 1; j < constraintsCount; j++)
                 {
-                    if (i != j && tempConstraints[i] == tempConstraints[j])
+                    if (tempConstraints[i] == tempConstraints[j])
                     {
                         Constraints.Remove(tempConstraints[i]);
                     }
