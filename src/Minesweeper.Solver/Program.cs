@@ -94,7 +94,7 @@ namespace Minesweeper.Solver
             {
                 if (i % 100 == 0)
                 {
-                    Console.WriteLine($"{length}x{width}/{mines}, {wins} wins, {i} attempts");
+                    Console.WriteLine($"{length}x{width}/{mines}: {wins} wins out of {i} attempts");
                 }
 
                 wins += Solve(new(length, width, mines));
