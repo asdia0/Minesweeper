@@ -4,7 +4,7 @@ using System.Linq;
 namespace Minesweeper.Solver
 {
     /// <summary>
-    /// Represens a constraint of binary variables.
+    /// Represents a constraint of binary variables.
     /// </summary>
     /// <param name="variables"></param>
     /// <param name="sum"></param>
