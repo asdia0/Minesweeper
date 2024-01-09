@@ -14,8 +14,6 @@ namespace Minesweeper.Solver
 
         public static void Main()
         {
-            //Grid grid = new(1, 3, 1);
-            //Solve(grid);
             Main1();
         }
 

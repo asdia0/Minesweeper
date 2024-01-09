@@ -196,6 +196,25 @@
             }
         }
 
+        public Grid(int length, int width, List<int> mines)
+        {
+            Utility.CheckGridParams(length, width, mines.Count());
+            if (mines.Where(i => i > length * width).Any() || mines.Count() != mines.ToHashSet().Count())
+            {
+                throw new Exception();
+            }
+
+            this.Length = length;
+            this.Width = width;
+            this.Mines = mines.Count;
+            this.Cells = new();
+
+            for (int index = 0; index < this.Length * this.Width; index++)
+            {
+                this.Cells.Add(new(this, new(length, width, Utility.CellIndexToCoordinates(index, this.Width)), mines.Contains(index)));
+            }
+        }
+
         /// <summary>
         /// Opens a <see cref="Cell">cell</see>.
         /// If the cell's <see cref="Cell.MineCount">count</see> is positive, it opens that cell.
