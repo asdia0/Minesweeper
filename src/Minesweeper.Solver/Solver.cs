@@ -31,7 +31,11 @@ namespace Minesweeper.Solver
                 Constraints.Add(new(cellVariables, (int)boundaryCell.MineCount - boundaryCell.AdjacentCells.Intersect(grid.FlaggedCells).Count()));
             }
 
-            // Set up global constraint (check if minecounting available)
+            // Set up global constraint
+            HashSet<int> unknownCellVariables = grid.UnknownCells
+                .Select(i => i.Point.ID)
+                .ToHashSet();
+            Constraints.Add(new(unknownCellVariables, grid.Mines - grid.FlaggedCells.Count()));
         }
 
         /// <summary>
