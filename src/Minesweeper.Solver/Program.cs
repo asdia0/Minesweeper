@@ -14,7 +14,7 @@ namespace Minesweeper.Solver
 
         public static void Main()
         {
-            Main1();
+            //Main1();
         }
 
         public static void Main1()
@@ -90,11 +90,6 @@ namespace Minesweeper.Solver
 
             for (int i = 1; i <= MaxAttempts; i++)
             {
-                if (i % 100 == 0)
-                {
-                    Console.WriteLine($"{length}x{width}/{mines}: {wins} wins out of {i} attempts");
-                }
-
                 wins += Solve(new(length, width, mines));
                 decimal currentWinRate = (decimal)wins / i;
                 if (previousWinRate == currentWinRate)
@@ -106,6 +101,11 @@ namespace Minesweeper.Solver
                     }
                 }
                 previousWinRate = currentWinRate;
+
+                if (i % 100 == 0)
+                {
+                    Console.WriteLine($"{length}x{width}/{mines}: {wins} wins out of {i} attempts");
+                }
             }
 
             EndDimension(length, width, mines, previousWinRate);

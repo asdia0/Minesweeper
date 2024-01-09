@@ -22,7 +22,7 @@ namespace Minesweeper.Solver
             Solutions = [];
 
             // Set up local constraints
-            foreach (Cell boundaryCell in grid.OpenedCells.Where(i => i.AdjacentCells.Intersect(grid.UnknownCells).Any()))
+            foreach (Cell boundaryCell in grid.BoundaryCells)
             {
                 HashSet<int> cellVariables = boundaryCell.AdjacentCells
                     .Intersect(grid.UnknownCells)
@@ -35,7 +35,7 @@ namespace Minesweeper.Solver
             HashSet<int> unknownCellVariables = grid.UnknownCells
                 .Select(i => i.Point.ID)
                 .ToHashSet();
-            Constraints.Add(new(unknownCellVariables, grid.Mines - grid.FlaggedCells.Count()));
+            Constraints.Add(new(unknownCellVariables, grid.Mines - grid.FlaggedCells.Count));
         }
 
         /// <summary>
