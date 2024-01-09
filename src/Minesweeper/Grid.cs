@@ -95,6 +95,9 @@
             }
         }
 
+        /// <summary>
+        /// Gets a list of cells with no adjacent mines.
+        /// </summary>
         public List<Cell> Openings
         {
             get
@@ -103,6 +106,9 @@
             }
         }
 
+        /// <summary>
+        /// Gets a list of safe cells adjacent to an unknown cell.
+        /// </summary>
         public List<Cell> BoundaryCells
         {
             get
@@ -111,6 +117,9 @@
             }
         }
 
+        /// <summary>
+        /// Gets a list of unknown cells adjacent to a boundary cell.
+        /// </summary>
         public List<Cell> ExposedCells
         {
             get
@@ -121,6 +130,9 @@
             }
         }
 
+        /// <summary>
+        /// Gets a list of unknown cells not adjacent to a boundary cell.
+        /// </summary>
         public List<Cell> FloatingCells
         {
             get
@@ -174,7 +186,7 @@
             this.Length = length;
             this.Width = width;
             this.Mines = mines;
-            this.Cells = new();
+            this.Cells = [];
 
             // Randomly generate mines.
             bool[] minesArray = new bool[this.Length * this.Width];
@@ -196,10 +208,16 @@
             }
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Grid"/> class.
+        /// </summary>
+        /// <param name="length">The length (y-axis) of the <see cref="Grid">grid </see> measured in <see cref="Cell">cells</see>.</param>
+        /// <param name="width">The width (x-axis) of the <see cref="Grid">grid </see> measured in <see cref="Cell">cells</see>.</param>
+        /// <param name="mines">The list of mined cell IDs.</param>
         public Grid(int length, int width, List<int> mines)
         {
-            Utility.CheckGridParams(length, width, mines.Count());
-            if (mines.Where(i => i > length * width).Any() || mines.Count() != mines.ToHashSet().Count())
+            Utility.CheckGridParams(length, width, mines.Count);
+            if (mines.Where(i => i > length * width).Any() || mines.Count != mines.ToHashSet().Count)
             {
                 throw new Exception();
             }
@@ -207,7 +225,7 @@
             this.Length = length;
             this.Width = width;
             this.Mines = mines.Count;
-            this.Cells = new();
+            this.Cells = [];
 
             for (int index = 0; index < this.Length * this.Width; index++)
             {

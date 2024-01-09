@@ -8,13 +8,13 @@ namespace Minesweeper.Solver
 {
     public class Program
     {
-        public static string FileName = "RawWinData.csv";
+        public const string FileName = "RawWinData.csv";
 
-        public static int MaxAttempts = 10000;
+        public const int MaxAttempts = 10000;
 
         public static void Main()
         {
-            //Main1();
+            GetWinRate(2, 2, 2);
         }
 
         public static void Main1()
@@ -131,7 +131,7 @@ namespace Minesweeper.Solver
 
                 solver.Solve();
 
-                bool hasLogic = solver.Solutions.Any();
+                bool hasLogic = solver.Solutions.Count != 0;
 
                 // Update cells
                 if (hasLogic)

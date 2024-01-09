@@ -74,15 +74,11 @@ namespace Minesweeper.Solver
             {
                 int sum = 0;
 
-                if (constraint.Sum == 0)
-                {
-                    // Sum already 0
-                }
-                else if (constraint.Sum == constraint.Variables.Count)
+                if (constraint.Sum == constraint.Variables.Count)
                 {
                     sum = 1;
                 }
-                else
+                else if (constraint.Sum != 0)
                 {
                     continue;
                 }
@@ -101,15 +97,7 @@ namespace Minesweeper.Solver
         /// </summary>
         public void RemoveUnnecessaryConstraints()
         {
-            RemoveEmptyConstraints();
-            RemoveDuplicateConstraints();
-        }
-
-        /// <summary>
-        /// Removes all constraints that have no variables.
-        /// </summary>
-        public void RemoveEmptyConstraints()
-        {
+            // Remove constraints with no variables
             foreach (Constraint constraint in Constraints.ToList())
             {
                 if (constraint.Variables.Count == 0)
@@ -117,13 +105,8 @@ namespace Minesweeper.Solver
                     Constraints.Remove(constraint);
                 }
             }
-        }
 
-        /// <summary>
-        /// Removes all duplicate constraints.
-        /// </summary>
-        public void RemoveDuplicateConstraints()
-        {
+            // Remove duplicate constraints
             int constraintsCount = Constraints.Count;
             List<Constraint> tempConstraints = [.. Constraints];
 

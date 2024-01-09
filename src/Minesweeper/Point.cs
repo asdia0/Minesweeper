@@ -45,8 +45,8 @@
                 int x = this.Coordinates.X;
                 int y = this.Coordinates.Y;
 
-                List<(int x, int y)> points = new()
-                {
+                List<(int x, int y)> points =
+                [
                     (x - 1, y - 1),
                     (x - 1, y),
                     (x - 1, y + 1),
@@ -55,7 +55,7 @@
                     (x + 1, y - 1),
                     (x + 1, y),
                     (x + 1, y + 1),
-                };
+                ];
 
                 // Keep valid points.
                 return points.Where(coor => coor.x >= 0 && coor.x < this.Width && coor.y >= 0 && coor.y < this.Length).ToList();
