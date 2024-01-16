@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
@@ -88,6 +89,9 @@ namespace Minesweeper.Solver
 
             Console.WriteLine("---");
 
+            var timer = new Stopwatch();
+            timer.Start();
+
             for (int i = 1; i <= MaxAttempts; i++)
             {
                 wins += Solve(new(length, width, mines));
@@ -102,11 +106,14 @@ namespace Minesweeper.Solver
                 }
                 previousWinRate = currentWinRate;
 
-                if (i % 100 == 0)
-                {
-                    Console.WriteLine($"{length}x{width}/{mines}: {wins} wins out of {i} attempts");
-                }
+                //if (i % 100 == 0)
+                //{
+                    double timeTaken = timer.Elapsed.TotalSeconds;
+                    Console.WriteLine($"{length}x{width}/{mines}: {wins} wins out of {i} attempts ({timeTaken / i}s per attempt)");
+                //}
             }
+
+            timer.Stop();
 
             EndDimension(length, width, mines, previousWinRate);
         }
@@ -135,11 +142,11 @@ namespace Minesweeper.Solver
                 // Update cells
                 if (hasLogic)
                 {
-                    foreach (Solution solution in solver.Solutions)
+                    foreach (Constraint solution in solver.Solutions)
                     {
-                        Cell cell = grid.Cells.Where(i => i.Point.ID == solution.ID).First();
+                        Cell cell = grid.Cells.Where(i => i.Point.ID == solution.Variables.First()).First();
 
-                        switch (solution.Assignment)
+                        switch (solution.Sum)
                         {
                             case 0:
                                 grid.OpenCell(cell);
