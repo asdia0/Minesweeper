@@ -65,5 +65,10 @@ namespace Minesweeper.Solver
         {
             return !(LHS == RHS);
         }
+
+        public override string ToString()
+        {
+            return $"({this.Sum}, {{{string.Join(",", this.Variables)}}})";
+        }
     }
 }

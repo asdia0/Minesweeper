@@ -15,7 +15,8 @@ namespace Minesweeper.Solver
 
         public static void Main()
         {
-            GetWinRate(9, 9, 10);
+            Grid grid = new(10, 10, 20);
+            Solve(grid);
         }
 
         public static void Main1()
@@ -161,6 +162,10 @@ namespace Minesweeper.Solver
                 }
                 else
                 {
+                    Console.WriteLine(grid.ShowKnown());
+                    Guesser guesser = new(grid, solver.Constraints);
+                    guesser.GetConstraintGroups(guesser.Constraints);
+
                     Random rng = new();
                     Cell guess = grid.UnknownCells[rng.Next(grid.UnknownCells.Count)];
 

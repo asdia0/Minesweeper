@@ -42,6 +42,12 @@ namespace Minesweeper.Solver
             Constraints.Add(new(unknownCellVariables, grid.Mines - grid.FlaggedCells.Count));
         }
 
+        public Inferrer(List<Constraint> constraints)
+        {
+            this.Constraints = constraints;
+            this.Solutions = [];
+        }
+
         /// <summary>
         /// Solves the given constraints. Solutions can be accessed via <see cref="Solutions"/>.
         /// </summary>
