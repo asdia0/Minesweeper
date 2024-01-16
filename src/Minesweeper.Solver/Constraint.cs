@@ -35,12 +35,22 @@ namespace Minesweeper.Solver
 
         public override bool Equals(object? obj)
         {
-            return base.Equals(obj);
+            var item = obj as Constraint;
+
+            return this == item;
         }
 
         public override int GetHashCode()
         {
-            return base.GetHashCode();
+            int hashCode = this.Sum.GetHashCode();
+
+            foreach (int variable in this.Variables)
+            {
+                hashCode ^= variable.GetHashCode();
+            }
+
+
+            return hashCode;
         }
 
         /// <summary>

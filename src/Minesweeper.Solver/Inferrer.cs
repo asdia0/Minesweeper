@@ -9,7 +9,7 @@ namespace Minesweeper.Solver
         /// <summary>
         /// A list of <see cref="Constraint"/>s to infer from.
         /// </summary>
-        public List<Constraint> Constraints { get; set; }
+        public HashSet<Constraint> Constraints { get; set; }
 
         /// <summary>
         /// A list of solutions to the given constraints.
@@ -21,6 +21,8 @@ namespace Minesweeper.Solver
                 return this.Constraints.Where(i => i.IsSolved).ToHashSet();
             }
         }
+
+        public bool Updated { get; set; } = false;
 
         /// <summary>
         /// Initalizes a new instance of <see cref="Inferrer"/> class.
@@ -48,7 +50,7 @@ namespace Minesweeper.Solver
             Constraints.Add(new(unknownCellVariables, grid.Mines - grid.FlaggedCells.Count));
         }
 
-        public Inferrer(List<Constraint> constraints)
+        public Inferrer(HashSet<Constraint> constraints)
         {
             this.Constraints = constraints;
             //this.Solutions = [];
@@ -59,28 +61,26 @@ namespace Minesweeper.Solver
         /// </summary>
         public void Solve()
         {
-            bool newConstraintsConstructed = true;
+            bool run = true;
 
-            List<Constraint> oldConstraints = [];
+            HashSet<Constraint> oldConstraints = [];
             int oldSolutionCount = 0;
 
             RemoveUnnecessaryConstraints();
 
             // Only stop running when no new constraints can be constructed.
-            while (newConstraintsConstructed)
+            while (run)
             {
+                Console.WriteLine(this.Solutions.Count);
+
                 SolveTrivials();
                 ConstructConstraints();
                 UpdateSolvedVariables();
                 RemoveUnnecessaryConstraints();
 
-                bool runTemp = Constraints.Except(oldConstraints).Any();
-                bool runSolution = this.Solutions.Count > oldSolutionCount;
+                run = this.Updated;
 
-                oldConstraints = Constraints;
-                oldSolutionCount = this.Solutions.Count;
-
-                newConstraintsConstructed = runTemp || runSolution;
+                this.Updated = false;
             }
         }
 
@@ -92,14 +92,14 @@ namespace Minesweeper.Solver
             foreach (Constraint constraint in Constraints.ToList())
             {
                 int sum = 0;
-
-                if (constraint.Sum == constraint.Variables.Count)
-                {
-                    sum = 1;
-                }
-                else if (constraint.Sum != 0)
+                
+                if (constraint.Sum != 0)
                 {
                     continue;
+                }
+                else if (constraint.Sum == constraint.Variables.Count)
+                {
+                    sum = 1;
                 }
 
                 foreach (int variable in constraint.Variables)
@@ -108,6 +108,8 @@ namespace Minesweeper.Solver
                 }
 
                 Constraints.Remove(constraint);
+
+                this.Updated = true;
             }
         }
 
@@ -117,23 +119,7 @@ namespace Minesweeper.Solver
         public void RemoveUnnecessaryConstraints()
         {
             // Remove constraints with no variables
-            Constraints.RemoveAll(i => i.Variables.Count == 0);
-            //Constraints.RemoveAll(i => i.Variables.Count == 1);
-
-            // Remove duplicate constraints
-            int constraintsCount = Constraints.Count;
-            List<Constraint> tempConstraints = [.. Constraints];
-
-            for (int i = 0; i < constraintsCount; i++)
-            {
-                for (int j = i + 1; j < constraintsCount; j++)
-                {
-                    if (tempConstraints[i] == tempConstraints[j])
-                    {
-                        Constraints.Remove(tempConstraints[i]);
-                    }
-                }
-            }
+            Constraints.RemoveWhere(i => i.Variables.Count == 0);
         }
 
         /// <summary>
@@ -159,6 +145,11 @@ namespace Minesweeper.Solver
                     }
                 }
             }
+
+            if (this.Constraints.Count > constraintCount)
+            {
+                this.Updated = true;
+            }
         }
 
         /// <summary>
@@ -168,6 +159,7 @@ namespace Minesweeper.Solver
         {
             foreach (Constraint constraint in Constraints.Where(i => i.IsSolved))
             {
+                this.Updated = true;
                 Solutions.Add(constraint);
             }
         }

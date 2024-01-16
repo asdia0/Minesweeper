@@ -15,7 +15,7 @@ namespace Minesweeper.Solver
 
         public static void Main()
         {
-            Grid grid = new(10, 10, 20);
+            Grid grid = new(10, 10, 10);
             Solve(grid);
         }
 
@@ -134,6 +134,9 @@ namespace Minesweeper.Solver
 
             while (grid.State == State.ToBegin || grid.State == State.Ongoing)
             {
+                Console.WriteLine(grid.ShowKnown());
+                Console.WriteLine();
+
                 Inferrer solver = new(grid);
 
                 solver.Solve();
@@ -159,28 +162,34 @@ namespace Minesweeper.Solver
                                 throw new Exception();
                         }
                     }
+
+                    Console.WriteLine(string.Join(", ", solver.Solutions));
                 }
                 else
                 {
-                    Console.WriteLine(grid.ShowKnown());
-                    Guesser guesser = new(grid, solver.Constraints);
+                    //Console.WriteLine(grid.ShowKnown());
+                    //Guesser guesser = new(grid, solver.Constraints);
+
+                    //foreach (HashSet<Constraint> group in guesser.GetGroups(guesser.Constraints))
+                    //{
+                    //    Console.WriteLine(string.Join(", ", group));
+                    //}
                     
-                    
-                    foreach (List<Constraint> group in guesser.GetGroups(guesser.Constraints))
-                    {
-                        List<List<Constraint>> configurations = guesser.GetConfigurations(group, []);
+                    //foreach (List<Constraint> group in guesser.GetGroups(guesser.Constraints))
+                    //{
+                    //    HashSet<HashSet<Constraint>> configurations = guesser.GetConfigurations([.. group], []);
 
-                        foreach (List<Constraint> config in configurations)
-                        {
-                            Console.WriteLine($"P: {string.Join(", ", config)}");
-                        }
-                        Console.WriteLine();
-                    }
+                    //    foreach (HashSet<Constraint> config in configurations)
+                    //    {
+                    //        Console.WriteLine($"P: {string.Join(", ", config)}");
+                    //    }
+                    //    Console.WriteLine();
+                    //}
 
 
-                    Console.WriteLine("End");
+                    //Console.WriteLine("End");
 
-                    return 1;
+                    //return 1;
 
                     Random rng = new();
                     Cell guess = grid.UnknownCells[rng.Next(grid.UnknownCells.Count)];
