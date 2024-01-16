@@ -15,8 +15,9 @@ namespace Minesweeper.Solver
 
         public static void Main()
         {
-            Grid grid = new(10, 10, 10);
-            Solve(grid);
+            GetWinRate(9, 9, 10);
+            //Grid grid = new(10, 10, 15);
+            //Solve(grid);
         }
 
         public static void Main1()
@@ -107,11 +108,11 @@ namespace Minesweeper.Solver
                 }
                 previousWinRate = currentWinRate;
 
-                //if (i % 100 == 0)
-                //{
+                if (i % 100 == 0)
+                {
                     double timeTaken = timer.Elapsed.TotalSeconds;
                     Console.WriteLine($"{length}x{width}/{mines}: {wins} wins out of {i} attempts ({timeTaken / i}s per attempt)");
-                //}
+                }
             }
 
             timer.Stop();
@@ -134,18 +135,17 @@ namespace Minesweeper.Solver
 
             while (grid.State == State.ToBegin || grid.State == State.Ongoing)
             {
-                Console.WriteLine(grid.ShowKnown());
-                Console.WriteLine();
+                //Utility.WriteColor(grid.ShowKnown() + "\n");
 
                 Inferrer solver = new(grid);
 
                 solver.Solve();
 
-                bool hasLogic = solver.Solutions.Count != 0;
-
                 // Update cells
-                if (hasLogic)
+                if (solver.Solutions.Count != 0)
                 {
+                    //Utility.WriteColor(grid.ShowKnown() + "\n");
+
                     foreach (Constraint solution in solver.Solutions)
                     {
                         Cell cell = grid.Cells.Where(i => i.Point.ID == solution.Variables.First()).First();
@@ -162,20 +162,28 @@ namespace Minesweeper.Solver
                                 throw new Exception();
                         }
                     }
-
-                    Console.WriteLine(string.Join(", ", solver.Solutions));
                 }
                 else
                 {
-                    //Console.WriteLine(grid.ShowKnown());
+                    //Utility.WriteColor(grid.ShowKnown() + "\n");
+
+                    //Inferrer solver1 = new(grid);
+                    //solver1.Solve();
+
+                    //Console.WriteLine(JsonConvert.SerializeObject(solver.Constraints.Where(i => i.Sum == i.Variables.Count), Formatting.Indented));
+
+                    //Console.WriteLine(string.Join("\n", solver1.Constraints) + "\n");
+
+                    //Console.WriteLine(JsonConvert.SerializeObject(solver1.Constraints, Formatting.Indented));
+
                     //Guesser guesser = new(grid, solver.Constraints);
 
                     //foreach (HashSet<Constraint> group in guesser.GetGroups(guesser.Constraints))
                     //{
                     //    Console.WriteLine(string.Join(", ", group));
                     //}
-                    
-                    //foreach (List<Constraint> group in guesser.GetGroups(guesser.Constraints))
+
+                    //foreach (HashSet<Constraint> group in guesser.GetGroups(guesser.Constraints))
                     //{
                     //    HashSet<HashSet<Constraint>> configurations = guesser.GetConfigurations([.. group], []);
 

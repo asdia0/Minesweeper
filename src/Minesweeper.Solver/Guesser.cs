@@ -70,17 +70,17 @@ namespace Minesweeper.Solver
 
             groups.Add(group);
 
-            foreach (HashSet<Constraint> group1 in groups)
-            {
-                List<HashSet<int>> intersections = Utility.GetGroups(group1.Select(i => i.Variables).ToHashSet()).ToList();
+            //foreach (HashSet<Constraint> group1 in groups)
+            //{
+            //    List<HashSet<int>> intersections = Utility.GetGroups(group1.Select(i => i.Variables).ToHashSet()).ToList();
 
-                foreach (HashSet<int> intersection in intersections)
-                {
-                    groups.Add(group1.Where(i => intersection.IsSupersetOf(i.Variables)).ToHashSet());
+            //    foreach (HashSet<int> intersection in intersections)
+            //    {
+            //        groups.Add(group1.Where(i => intersection.IsSupersetOf(i.Variables)).ToHashSet());
 
-                    group1.RemoveWhere(i => intersection.IsProperSubsetOf(i.Variables));
-                }
-            }
+            //        group1.RemoveWhere(i => intersection.IsProperSubsetOf(i.Variables));
+            //    }
+            //}
 
             //foreach (List<Constraint> conGroup in groups)
             //{

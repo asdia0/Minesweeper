@@ -73,6 +73,11 @@ namespace Minesweeper.Solver
 
         public static bool operator ==(Constraint LHS, Constraint RHS)
         {
+            if (LHS is null || RHS is null)
+            {
+                return false;
+            }
+
             if (LHS.Variables.SetEquals(RHS.Variables) && LHS.Sum == RHS.Sum)
             {
                 return true;

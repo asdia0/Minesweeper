@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace Minesweeper.Solver
@@ -14,15 +15,7 @@ namespace Minesweeper.Solver
         /// <summary>
         /// A list of solutions to the given constraints.
         /// </summary>
-        public HashSet<Constraint> Solutions
-        {
-            get
-            {
-                return this.Constraints.Where(i => i.IsSolved).ToHashSet();
-            }
-        }
-
-        public bool Updated { get; set; } = false;
+        public HashSet<Constraint> Solutions { get; set; }
 
         /// <summary>
         /// Initalizes a new instance of <see cref="Inferrer"/> class.
@@ -31,7 +24,7 @@ namespace Minesweeper.Solver
         public Inferrer(Grid grid)
         {
             Constraints = [];
-            //Solutions = [];
+            Solutions = [];
 
             // Set up local constraints
             foreach (Cell boundaryCell in grid.BoundaryCells)
@@ -41,6 +34,7 @@ namespace Minesweeper.Solver
                     .Select(i => i.Point.ID)
                     .ToHashSet();
                 Constraints.Add(new(cellVariables, (int)boundaryCell.MineCount - boundaryCell.AdjacentCells.Intersect(grid.FlaggedCells).Count()));
+           
             }
 
             // Set up global constraint
@@ -53,7 +47,7 @@ namespace Minesweeper.Solver
         public Inferrer(HashSet<Constraint> constraints)
         {
             this.Constraints = constraints;
-            //this.Solutions = [];
+            this.Solutions = [];
         }
 
         /// <summary>
@@ -62,25 +56,24 @@ namespace Minesweeper.Solver
         public void Solve()
         {
             bool run = true;
-
-            HashSet<Constraint> oldConstraints = [];
-            int oldSolutionCount = 0;
-
-            RemoveUnnecessaryConstraints();
+            
+            List<Constraint> oldConstraints = new();
 
             // Only stop running when no new constraints can be constructed.
             while (run)
             {
-                Console.WriteLine(this.Solutions.Count);
-
                 SolveTrivials();
                 ConstructConstraints();
-                UpdateSolvedVariables();
+                UpdateSolvedConstraints();
                 RemoveUnnecessaryConstraints();
 
-                run = this.Updated;
+                bool runTemp = Constraints.Except(oldConstraints).Any();
 
-                this.Updated = false;
+                oldConstraints = Constraints.ToList();
+
+                run = runTemp;
+
+                //Console.WriteLine($"Constraints: {this.Constraints.Count}, Solutions: {this.Solutions.Count}");
             }
         }
 
@@ -89,27 +82,27 @@ namespace Minesweeper.Solver
         /// </summary>
         public void SolveTrivials()
         {
-            foreach (Constraint constraint in Constraints.ToList())
-            {
-                int sum = 0;
-                
-                if (constraint.Sum != 0)
-                {
-                    continue;
-                }
-                else if (constraint.Sum == constraint.Variables.Count)
-                {
-                    sum = 1;
-                }
+            HashSet<Constraint> trivialAllSafe = Constraints.Where(i => i.Sum == 0).ToHashSet();
+            HashSet<Constraint> trivialAllMined = Constraints.Where(i => i.Sum == i.Variables.Count).ToHashSet();
 
+            foreach (Constraint constraint in trivialAllSafe)
+            {
                 foreach (int variable in constraint.Variables)
                 {
-                    Constraints.Add(new([variable], sum));
+                    this.Solutions.Add(new([variable], 0));
                 }
 
-                Constraints.Remove(constraint);
+                this.Constraints.Remove(constraint);
+            }
 
-                this.Updated = true;
+            foreach (Constraint constraint in trivialAllMined)
+            {
+                foreach (int variable in constraint.Variables)
+                {
+                    this.Solutions.Add(new([variable], 1));
+                }
+
+                this.Constraints.Remove(constraint);
             }
         }
 
@@ -118,7 +111,6 @@ namespace Minesweeper.Solver
         /// </summary>
         public void RemoveUnnecessaryConstraints()
         {
-            // Remove constraints with no variables
             Constraints.RemoveWhere(i => i.Variables.Count == 0);
         }
 
@@ -139,28 +131,48 @@ namespace Minesweeper.Solver
                     Constraint X = constraintList[i];
                     Constraint Y = constraintList[j];
 
-                    if (X.Variables.IsSupersetOf(Y.Variables) && X != Y)
+                    if (X.Variables.IsSupersetOf(Y.Variables))
                     {
-                        Constraints.Add(new(X.Variables.Except(Y.Variables).ToHashSet(), X.Sum - Y.Sum));
+                        this.Constraints.Add(new(X.Variables.Except(Y.Variables).ToHashSet(), X.Sum - Y.Sum));
                     }
                 }
             }
-
-            if (this.Constraints.Count > constraintCount)
-            {
-                this.Updated = true;
-            }
         }
 
-        /// <summary>
-        /// Add solved constraints to <see cref="Solutions"/>.
-        /// </summary>
-        public void UpdateSolvedVariables()
+        public void UpdateSolvedConstraints()
         {
-            foreach (Constraint constraint in Constraints.Where(i => i.IsSolved))
+            Solutions.UnionWith(Constraints.Where(i => i.IsSolved));
+            Constraints.RemoveWhere(i => Solutions.Contains(i));
+
+            //foreach (Constraint constraint in Constraints)
+            //{
+            //    foreach (Constraint solution in Solutions)
+            //    {
+            //        int ID = solution.Variables.First();
+
+            //        if (!constraint.Variables.Contains(ID))
+            //        {
+            //            continue;
+            //        }
+
+            //        constraint.Variables.Remove(ID);
+            //        constraint.Sum -= solution.Sum;
+            //    }
+            //}
+
+            foreach (Constraint solution in Solutions)
             {
-                this.Updated = true;
-                Solutions.Add(constraint);
+                int ID = solution.Variables.First();
+
+                foreach (Constraint constraint in Constraints)
+                {
+
+                    if (constraint.Variables.Contains(ID))
+                    {
+                        constraint.Variables.Remove(ID);
+                        constraint.Sum -= solution.Sum;
+                    }
+                }
             }
         }
     }
