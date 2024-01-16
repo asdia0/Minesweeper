@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Data;
 using System.Linq;
+using System.Reflection.Metadata;
 
 namespace Minesweeper.Solver
 {
@@ -23,27 +25,12 @@ namespace Minesweeper.Solver
         /// <summary>
         /// Checks if there is only one variable left.
         /// </summary>
-        public bool Solved
+        public bool IsSolved
         {
             get
             {
                 return Variables.Count == 1;
             }
-        }
-
-        /// <summary>
-        /// Checks if the current constraint contains a given constraint.
-        /// </summary>
-        /// <param name="constraint"></param>
-        /// <returns></returns>
-        public bool Contains(Constraint constraint)
-        {
-            if (constraint.Sum > this.Sum || this == constraint)
-            {
-                return false;
-            }
-
-            return this.Variables.IsSupersetOf(constraint.Variables);
         }
 
         /// <summary>
@@ -54,7 +41,7 @@ namespace Minesweeper.Solver
         /// <returns></returns>
         public bool Subtract(Constraint input, out Constraint output)
         {
-            if (!Contains(input))
+            if (!this.Variables.IsSupersetOf(input.Variables))
             {
                 output = new([], 0);
                 return false;

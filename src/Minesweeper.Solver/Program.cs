@@ -14,7 +14,7 @@ namespace Minesweeper.Solver
 
         public static void Main()
         {
-            GetWinRate(2, 2, 2);
+            GetWinRate(9, 9, 10);
         }
 
         public static void Main1()
@@ -119,7 +119,6 @@ namespace Minesweeper.Solver
             }
         }
 
-
         public static int Solve(Grid grid)
         {
             // Start at corner.
@@ -127,7 +126,7 @@ namespace Minesweeper.Solver
 
             while (grid.State == State.ToBegin || grid.State == State.Ongoing)
             {
-                Solver solver = new(grid);
+                Inferrer solver = new(grid);
 
                 solver.Solve();
 

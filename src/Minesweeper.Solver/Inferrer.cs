@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Minesweeper.Solver
 {
-    public class Solver
+    public class Inferrer
     {
         /// <summary>
         /// A list of <see cref="Constraint"/>s to infer from.
@@ -16,7 +16,11 @@ namespace Minesweeper.Solver
         /// </summary>
         public List<Solution> Solutions { get; set; }
 
-        public Solver(Grid grid)
+        /// <summary>
+        /// Initalizes a new instance of <see cref="Inferrer"/> class.
+        /// </summary>
+        /// <param name="grid">The <see cref="Grid"/> to infer from.</param>
+        public Inferrer(Grid grid)
         {
             Constraints = [];
             Solutions = [];
@@ -156,7 +160,7 @@ namespace Minesweeper.Solver
         {
             foreach (Constraint constraint in Constraints)
             {
-                if (!constraint.Solved)
+                if (!constraint.IsSolved)
                 {
                     continue;
                 }
