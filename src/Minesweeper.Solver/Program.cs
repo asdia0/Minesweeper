@@ -164,7 +164,23 @@ namespace Minesweeper.Solver
                 {
                     Console.WriteLine(grid.ShowKnown());
                     Guesser guesser = new(grid, solver.Constraints);
-                    guesser.GetConstraintGroups(guesser.Constraints);
+                    
+                    
+                    foreach (List<Constraint> group in guesser.GetGroups(guesser.Constraints))
+                    {
+                        List<List<Constraint>> configurations = guesser.GetConfigurations(group, []);
+
+                        foreach (List<Constraint> config in configurations)
+                        {
+                            Console.WriteLine($"P: {string.Join(", ", config)}");
+                        }
+                        Console.WriteLine();
+                    }
+
+
+                    Console.WriteLine("End");
+
+                    return 1;
 
                     Random rng = new();
                     Cell guess = grid.UnknownCells[rng.Next(grid.UnknownCells.Count)];

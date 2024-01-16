@@ -14,7 +14,13 @@ namespace Minesweeper.Solver
         /// <summary>
         /// A list of solutions to the given constraints.
         /// </summary>
-        public HashSet<Constraint> Solutions { get; set; }
+        public HashSet<Constraint> Solutions
+        {
+            get
+            {
+                return this.Constraints.Where(i => i.IsSolved).ToHashSet();
+            }
+        }
 
         /// <summary>
         /// Initalizes a new instance of <see cref="Inferrer"/> class.
@@ -23,7 +29,7 @@ namespace Minesweeper.Solver
         public Inferrer(Grid grid)
         {
             Constraints = [];
-            Solutions = [];
+            //Solutions = [];
 
             // Set up local constraints
             foreach (Cell boundaryCell in grid.BoundaryCells)
@@ -45,7 +51,7 @@ namespace Minesweeper.Solver
         public Inferrer(List<Constraint> constraints)
         {
             this.Constraints = constraints;
-            this.Solutions = [];
+            //this.Solutions = [];
         }
 
         /// <summary>
@@ -56,6 +62,7 @@ namespace Minesweeper.Solver
             bool newConstraintsConstructed = true;
 
             List<Constraint> oldConstraints = [];
+            int oldSolutionCount = 0;
 
             RemoveUnnecessaryConstraints();
 
@@ -68,10 +75,12 @@ namespace Minesweeper.Solver
                 RemoveUnnecessaryConstraints();
 
                 bool runTemp = Constraints.Except(oldConstraints).Any();
+                bool runSolution = this.Solutions.Count > oldSolutionCount;
 
                 oldConstraints = Constraints;
+                oldSolutionCount = this.Solutions.Count;
 
-                newConstraintsConstructed = runTemp;
+                newConstraintsConstructed = runTemp || runSolution;
             }
         }
 
@@ -108,13 +117,8 @@ namespace Minesweeper.Solver
         public void RemoveUnnecessaryConstraints()
         {
             // Remove constraints with no variables
-            foreach (Constraint constraint in Constraints.ToList())
-            {
-                if (constraint.Variables.Count == 0)
-                {
-                    Constraints.Remove(constraint);
-                }
-            }
+            Constraints.RemoveAll(i => i.Variables.Count == 0);
+            //Constraints.RemoveAll(i => i.Variables.Count == 1);
 
             // Remove duplicate constraints
             int constraintsCount = Constraints.Count;
@@ -149,7 +153,7 @@ namespace Minesweeper.Solver
                     Constraint X = constraintList[i];
                     Constraint Y = constraintList[j];
 
-                    if (X.Variables.IsSupersetOf(Y.Variables))
+                    if (X.Variables.IsSupersetOf(Y.Variables) && X != Y)
                     {
                         Constraints.Add(new(X.Variables.Except(Y.Variables).ToHashSet(), X.Sum - Y.Sum));
                     }

@@ -33,6 +33,16 @@ namespace Minesweeper.Solver
             }
         }
 
+        public override bool Equals(object? obj)
+        {
+            return base.Equals(obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
         /// <summary>
         /// Subtracts a given constraint from the current constraint.
         /// </summary>
