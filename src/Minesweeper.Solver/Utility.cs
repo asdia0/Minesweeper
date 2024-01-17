@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace Minesweeper.Solver
 {
@@ -17,7 +18,7 @@ namespace Minesweeper.Solver
 
             Dictionary<int, HashSet<int>> groupsOneDirectional = new();
 
-            List<int> numbers = new();
+            List<int> numbers = lists.SelectMany(i => i).Distinct().ToList();
 
             foreach (int num in numbers)
             {
@@ -35,16 +36,29 @@ namespace Minesweeper.Solver
 
             foreach (int num in numbers)
             {
+                if (!groups.Where(i => i.Contains(num)).Any())
+                {
+                    continue;
+                }
+
+                bool addGroup = true;
+
                 foreach (int intersections in groupsOneDirectional[num])
                 {
-                    if (groupsOneDirectional[intersections].Contains(num))
+                    if (!groupsOneDirectional[intersections].Contains(num))
                     {
-                        groups.Add(groupsOneDirectional[num]);
+                        addGroup = false;
+                        break;
                     }
+                }
+
+                if (addGroup)
+                {
+                    groups.Add(groupsOneDirectional[num]);
                 }
             }
 
-            return groups;
+            return groups.Where(i => i.Count > 1).ToHashSet();
         }
 
         public static void WriteColor(string message)

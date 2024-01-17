@@ -64,8 +64,8 @@ namespace Minesweeper.Solver
             {
                 SolveTrivials();
                 ConstructConstraints();
-                UpdateSolvedConstraints();
                 RemoveUnnecessaryConstraints();
+                UpdateSolvedConstraints();
 
                 bool runTemp = Constraints.Except(oldConstraints).Any();
 

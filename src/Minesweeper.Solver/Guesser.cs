@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http.Headers;
-using System.Reflection.Metadata.Ecma335;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks.Dataflow;
+using System.Xml.Resolvers;
 using Newtonsoft.Json;
 
 namespace Minesweeper.Solver
@@ -15,22 +12,39 @@ namespace Minesweeper.Solver
 
         public HashSet<Constraint> Constraints { get; set; }
 
-        public Guesser(Grid grid, HashSet<Constraint> constraints)
+        public Guesser(Grid grid)
         {
             // Ensure that grid has no more logic
             this.Grid = grid;
             this.Constraints = new();
 
-            foreach (Constraint constraint in constraints)
+            // Set up local constraints
+            foreach (Cell boundaryCell in grid.BoundaryCells)
             {
-                if (!constraint.Variables.Except(grid.ExposedCells.Select(i => i.Point.ID)).Any())
-                {
-                    Constraints.Add(constraint);
-                }
+                HashSet<int> cellVariables = boundaryCell.AdjacentCells
+                    .Intersect(grid.UnknownCells)
+                    .Select(i => i.Point.ID)
+                    .ToHashSet();
+                Constraints.Add(new(cellVariables, (int)boundaryCell.MineCount - boundaryCell.AdjacentCells.Intersect(grid.FlaggedCells).Count()));
+
             }
         }
 
         public HashSet<HashSet<Constraint>> GetGroups(HashSet<Constraint> constraints)
+        {
+            HashSet<HashSet<Constraint>> results = new();
+
+            HashSet<HashSet<Constraint>> preliminaryGroups = GetPreliminaryGroups(constraints);
+
+            foreach (HashSet<Constraint> preliminaryGroup in preliminaryGroups)
+            {
+                results.UnionWith(GetFinalGroups(preliminaryGroup));
+            }
+
+            return results;
+        }
+
+        public HashSet<HashSet<Constraint>> GetPreliminaryGroups(HashSet<Constraint> constraints)
         {
             HashSet<HashSet<Constraint>> groups = new();
 
@@ -40,7 +54,7 @@ namespace Minesweeper.Solver
             HashSet<Constraint> group = new();
             HashSet<Constraint> searched = new();
 
-            while(remainingConstraints.Count > 0)
+            while (remainingConstraints.Count > 0)
             {
                 Constraint seed = null;
 
@@ -70,28 +84,47 @@ namespace Minesweeper.Solver
 
             groups.Add(group);
 
-            //foreach (HashSet<Constraint> group1 in groups)
-            //{
-            //    List<HashSet<int>> intersections = Utility.GetGroups(group1.Select(i => i.Variables).ToHashSet()).ToList();
+            return groups;
+        }
 
-            //    foreach (HashSet<int> intersection in intersections)
-            //    {
-            //        groups.Add(group1.Where(i => intersection.IsSupersetOf(i.Variables)).ToHashSet());
+        public HashSet<HashSet<Constraint>> GetFinalGroups(HashSet<Constraint> constraints)
+        {
+            HashSet<Constraint> constraintsTemp = constraints.ToHashSet();
+            HashSet<HashSet<Constraint>> groups = new();
 
-            //        group1.RemoveWhere(i => intersection.IsProperSubsetOf(i.Variables));
-            //    }
-            //}
+            HashSet<HashSet<int>> intersections = Utility.GetGroups(constraints.Select(i => i.Variables).ToHashSet());
 
-            //foreach (List<Constraint> conGroup in groups)
-            //{
-            //    Console.WriteLine(string.Join(", ", conGroup) + "\n");
-            //}
-            //Console.WriteLine();
+            foreach (HashSet<int> intersection in intersections)
+            {
+                // Find constraint whose variables are exactly the intersection.
+                Constraint constraint = constraintsTemp.Where(i => i.Variables == intersection).FirstOrDefault();
+
+                if (constraint is null)
+                {
+                    continue;
+                }
+
+                // Find constraints whose variables contain the intersection
+                HashSet<Constraint> constraintSupersets = constraintsTemp.Where(i => i.Variables.IsProperSupersetOf(intersection)).ToHashSet();
+
+                // Update constraintSupersets in constraintsTemp
+                foreach (Constraint constraintSuperset in constraintSupersets)
+                {
+                    constraintsTemp.Remove(constraintSuperset);
+                    constraintsTemp.Add(new(constraintSuperset.Variables.Except(intersection).ToHashSet(), constraintSuperset.Sum - constraint.Sum));
+                }
+
+                Console.WriteLine("C: " + constraint);
+
+                groups.Add([constraint]);
+            }
+
+            groups.Add(constraintsTemp);
 
             return groups;
         }
 
-        public HashSet<HashSet<Constraint>> GetConfigurations(HashSet<Constraint> constraints, HashSet<Constraint> assumptions, int depth=0)
+        public HashSet<HashSet<Constraint>> GetConfigurations(HashSet<Constraint> constraints, HashSet<Constraint> solutions, int depth=0)
         {
             //Console.WriteLine(string.Join(", ", constraints));
             //Console.WriteLine(string.Join(", ", assumptions) + "\n");
@@ -99,21 +132,16 @@ namespace Minesweeper.Solver
             HashSet<HashSet<Constraint>> configurations = new();
 
             List<int> variables = constraints.SelectMany(i => i.Variables).Distinct().ToList();
-            List<int> solvedVariables = assumptions.SelectMany(i => i.Variables).Distinct().ToList();
+            //List<int> solvedVariables = solutions.SelectMany(i => i.Variables).Distinct().ToList();
+            List<int> solvedVariables = solutions.Where(i => i.Variables.Count == 1).SelectMany(i => i.Variables).Distinct().ToList();
 
             int count = 0;
 
             foreach (int ID in variables.Except(solvedVariables))
             {
-                foreach (HashSet<Constraint> config in configurations)
-                {
-                    Console.WriteLine($"{depth}: {string.Join(", ", config)}");
-                }
-                Console.WriteLine();
-
                 // Assume cell is safe
                 Inferrer solverSafe = new(this.Grid);
-                solverSafe.Constraints = constraints.Union(assumptions).Union([new([ID], 0)]).ToHashSet();
+                solverSafe.Constraints = constraints.Union(solutions).Union([new([ID], 0)]).ToHashSet();
                 solverSafe.Solve();
 
                 HashSet<Constraint> variableSolutionsSafe = solverSafe.Solutions
@@ -121,20 +149,22 @@ namespace Minesweeper.Solver
                     .Distinct()
                     .ToHashSet();
 
+                HashSet<Constraint> newSolutions = solutions.Union(variableSolutionsSafe).ToHashSet();
+
                 // Not solved
-                if (variableSolutionsSafe.Count < variables.Count)
+                if (newSolutions.Count < variables.Count)
                 {
-                    configurations.UnionWith(GetConfigurations(solverSafe.Constraints.ToHashSet(), variableSolutionsSafe, depth+1));
+                    configurations.UnionWith(GetConfigurations(solverSafe.Constraints.ToHashSet(), newSolutions, depth+1));
                 }
                 // Solved
                 else
                 {
-                    configurations.Add(variableSolutionsSafe);
+                    configurations.Add(newSolutions);
                 }
 
                 // Assume cell is mined
                 Inferrer solverMined = new(this.Grid);
-                solverMined.Constraints = constraints.Union(assumptions).Union([new([ID], 1)]).ToHashSet();
+                solverMined.Constraints = constraints.Union(solutions).Union([new([ID], 1)]).ToHashSet();
                 solverMined.Solve();
 
                 HashSet<Constraint> variableSolutionsMined = solverMined.Solutions
@@ -142,18 +172,25 @@ namespace Minesweeper.Solver
                     .Distinct()
                     .ToHashSet();
 
+                HashSet<Constraint> newSolutionsMined = solutions.Union(variableSolutionsMined).ToHashSet();
+
                 // Not solved
-                if (variableSolutionsMined.Count < variables.Count)
+                if (newSolutionsMined.Count < variables.Count)
                 {
-                    configurations.UnionWith(GetConfigurations(solverMined.Constraints.ToHashSet(), variableSolutionsMined, depth+1));
+                    configurations.UnionWith(GetConfigurations(solverMined.Constraints.ToHashSet(), newSolutionsMined, depth + 1));
                 }
                 // Solved
                 else
                 {
-                    configurations.Add(variableSolutionsMined);
+                    configurations.Add(newSolutionsMined);
                 }
 
                 count++;
+            }
+
+            foreach (HashSet<Constraint> config in configurations)
+            {
+                Console.WriteLine($"{depth}: {string.Join(", ", config)}");
             }
 
             return configurations;

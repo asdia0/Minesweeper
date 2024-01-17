@@ -15,9 +15,9 @@ namespace Minesweeper.Solver
 
         public static void Main()
         {
-            GetWinRate(9, 9, 10);
-            //Grid grid = new(10, 10, 15);
-            //Solve(grid);
+            //GetWinRate(9, 9, 10);
+            Grid grid = new(10, 10, 15);
+            Solve(grid);
         }
 
         public static void Main1()
@@ -165,37 +165,31 @@ namespace Minesweeper.Solver
                 }
                 else
                 {
-                    //Utility.WriteColor(grid.ShowKnown() + "\n");
+                    Utility.WriteColor(grid.ShowKnown() + "\n");
 
-                    //Inferrer solver1 = new(grid);
-                    //solver1.Solve();
+                    Inferrer solver1 = new(grid);
+                    solver1.Solve();
 
-                    //Console.WriteLine(JsonConvert.SerializeObject(solver.Constraints.Where(i => i.Sum == i.Variables.Count), Formatting.Indented));
+                    Guesser guesser = new(grid);
 
-                    //Console.WriteLine(string.Join("\n", solver1.Constraints) + "\n");
+                    foreach (HashSet<Constraint> group in guesser.GetGroups(guesser.Constraints))
+                    {
+                        Console.WriteLine(string.Join(", ", group));
+                    }
 
-                    //Console.WriteLine(JsonConvert.SerializeObject(solver1.Constraints, Formatting.Indented));
+                    foreach (HashSet<Constraint> group in guesser.GetGroups(guesser.Constraints))
+                    {
+                        HashSet<HashSet<Constraint>> configurations = guesser.GetConfigurations([.. group], []);
 
-                    //Guesser guesser = new(grid, solver.Constraints);
-
-                    //foreach (HashSet<Constraint> group in guesser.GetGroups(guesser.Constraints))
-                    //{
-                    //    Console.WriteLine(string.Join(", ", group));
-                    //}
-
-                    //foreach (HashSet<Constraint> group in guesser.GetGroups(guesser.Constraints))
-                    //{
-                    //    HashSet<HashSet<Constraint>> configurations = guesser.GetConfigurations([.. group], []);
-
-                    //    foreach (HashSet<Constraint> config in configurations)
-                    //    {
-                    //        Console.WriteLine($"P: {string.Join(", ", config)}");
-                    //    }
-                    //    Console.WriteLine();
-                    //}
+                        foreach (HashSet<Constraint> config in configurations)
+                        {
+                            Console.WriteLine($"P: {string.Join(", ", config)}");
+                        }
+                        Console.WriteLine();
+                    }
 
 
-                    //Console.WriteLine("End");
+                    Console.WriteLine("End");
 
                     //return 1;
 
