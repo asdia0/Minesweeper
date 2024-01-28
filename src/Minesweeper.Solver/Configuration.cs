@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Minesweeper.Solver
@@ -7,31 +9,26 @@ namespace Minesweeper.Solver
     {
         public Dictionary<int, int?> Assignments { get; set; }
 
-        public Configuration(Configuration config1, Configuration config2)
-        {
-            foreach (KeyValuePair<int, int?> pair in config2.Assignments)
-            {
-                config1.Assignments[pair.Key] = pair.Value;
-            }
-            this.Assignments = config1.Assignments;
-        }
-
-        public Configuration(List<Constraint> constraints, List<Constraint> solutions)
+        public Configuration(List<int> variables, HashSet<Constraint> solutions)
         {
             this.Assignments = new();
 
-            List<int> variables = constraints.SelectMany(i => i.Variables).ToList();
-
-            foreach (int variable in variables.Distinct())
+            foreach (int variable in variables)
             {
-                if (solutions.Where(i => i.Variables.Contains(variable)).Any())
-                {
-                    Assignments.Add(variable, solutions.Where(i => i.Variables.Contains(variable)).First().Sum);
-                }
-                else
-                {
-                    Assignments.Add(variable, null);
-                }
+                this.Assignments.Add(variable, null);
+            }
+
+            foreach (Constraint constraint in solutions)
+            {
+                this.Assignments[constraint.Variables.First()] = constraint.Sum;
+            }
+        }
+
+        public int Sum
+        {
+            get
+            {
+                return this.Assignments.Where(i => i.Value == 1).Count();
             }
         }
 
@@ -39,8 +36,39 @@ namespace Minesweeper.Solver
         {
             get
             {
-                return !this.Assignments.Values.Where(i => i == null).Any();
+                return this.Assignments.Where(i => i.Value == null).Count() == 0;
             }
         }
+
+        /// <summary>
+        /// Adds two configurations that are assumed to be solved.
+        /// </summary>
+        /// <param name="left"></param>
+        /// <param name="right"></param>
+        /// <returns></returns>
+        public static Configuration operator +(Configuration left, Configuration right)
+        {
+            Configuration sum = new();
+            sum.Assignments = left.Assignments.Concat(right.Assignments).ToDictionary(i => i.Key, i => i.Value);
+            return sum;
+        }
+        //public bool Add(Configuration input, out Configuration output)
+        //{
+        //    HashSet<int> nullLHS = this.Assignments.Where(i => i.Value == null).Select(i => i.Key).ToHashSet();
+        //    HashSet<int> nullRHS = input.Assignments.Where(i => i.Value == null).Select(i => i.Key).ToHashSet();
+
+        //    if (nullLHS.IsSupersetOf(nullRHS))
+        //    {
+
+        //        return true;
+        //    }
+        //    else if (nullRHS.IsSupersetOf(nullLHS))
+        //    {
+        //        return true;
+        //    }
+
+        //    output = new();
+        //    return false;
+        //}
     }
 }

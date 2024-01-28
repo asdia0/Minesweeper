@@ -16,7 +16,7 @@ namespace Minesweeper.Solver
         public static void Main()
         {
             //GetWinRate(9, 9, 10);
-            Grid grid = new(10, 10, 15);
+            Grid grid = new(16, 16, 40);
             Solve(grid);
         }
 
@@ -177,21 +177,16 @@ namespace Minesweeper.Solver
                         Console.WriteLine(string.Join(", ", group));
                     }
 
-                    foreach (HashSet<Constraint> group in guesser.GetGroups(guesser.Constraints))
+                    foreach (Configuration config in guesser.GetAllConfigurations())
                     {
-                        HashSet<HashSet<Constraint>> configurations = guesser.GetConfigurations([.. group], []);
-
-                        foreach (HashSet<Constraint> config in configurations)
-                        {
-                            Console.WriteLine($"P: {string.Join(", ", config)}");
-                        }
-                        Console.WriteLine();
+                        Console.WriteLine(JsonConvert.SerializeObject(config.Assignments));
                     }
+
 
 
                     Console.WriteLine("End");
 
-                    //return 1;
+                    return 1;
 
                     Random rng = new();
                     Cell guess = grid.UnknownCells[rng.Next(grid.UnknownCells.Count)];

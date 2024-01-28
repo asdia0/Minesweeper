@@ -34,7 +34,6 @@ namespace Minesweeper.Solver
                     .Select(i => i.Point.ID)
                     .ToHashSet();
                 Constraints.Add(new(cellVariables, (int)boundaryCell.MineCount - boundaryCell.AdjacentCells.Intersect(grid.FlaggedCells).Count()));
-           
             }
 
             // Set up global constraint
@@ -131,9 +130,11 @@ namespace Minesweeper.Solver
                     Constraint X = constraintList[i];
                     Constraint Y = constraintList[j];
 
-                    if (X.Variables.IsSupersetOf(Y.Variables))
+                    bool canSubtract = X.Subtract(Y, out Constraint difference);
+
+                    if (canSubtract)
                     {
-                        this.Constraints.Add(new(X.Variables.Except(Y.Variables).ToHashSet(), X.Sum - Y.Sum));
+                        this.Constraints.Add(difference);
                     }
                 }
             }
@@ -142,25 +143,9 @@ namespace Minesweeper.Solver
         public void UpdateSolvedConstraints()
         {
             Solutions.UnionWith(Constraints.Where(i => i.IsSolved));
-            Constraints.RemoveWhere(i => Solutions.Contains(i));
+            Constraints = Constraints.Except(Solutions).ToHashSet();
 
-            //foreach (Constraint constraint in Constraints)
-            //{
-            //    foreach (Constraint solution in Solutions)
-            //    {
-            //        int ID = solution.Variables.First();
-
-            //        if (!constraint.Variables.Contains(ID))
-            //        {
-            //            continue;
-            //        }
-
-            //        constraint.Variables.Remove(ID);
-            //        constraint.Sum -= solution.Sum;
-            //    }
-            //}
-
-            foreach (Constraint solution in Solutions)
+            foreach (Constraint solution in Solutions.Distinct())
             {
                 int ID = solution.Variables.First();
 

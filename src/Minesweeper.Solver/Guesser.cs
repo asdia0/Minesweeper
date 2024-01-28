@@ -1,8 +1,7 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Xml.Resolvers;
-using Newtonsoft.Json;
 
 namespace Minesweeper.Solver
 {
@@ -40,6 +39,8 @@ namespace Minesweeper.Solver
             {
                 results.UnionWith(GetFinalGroups(preliminaryGroup));
             }
+
+            results.RemoveWhere(i => i.Count == 0);
 
             return results;
         }
@@ -124,149 +125,107 @@ namespace Minesweeper.Solver
             return groups;
         }
 
-        public HashSet<HashSet<Constraint>> GetConfigurations(HashSet<Constraint> constraints, HashSet<Constraint> solutions, int depth=0)
+        public List<Configuration> GetAllConfigurations()
         {
-            //Console.WriteLine(string.Join(", ", constraints));
-            //Console.WriteLine(string.Join(", ", assumptions) + "\n");
 
-            HashSet<HashSet<Constraint>> configurations = new();
+            List<List<Configuration>> configurations = new();
 
-            List<int> variables = constraints.SelectMany(i => i.Variables).Distinct().ToList();
-            //List<int> solvedVariables = solutions.SelectMany(i => i.Variables).Distinct().ToList();
-            List<int> solvedVariables = solutions.Where(i => i.Variables.Count == 1).SelectMany(i => i.Variables).Distinct().ToList();
-
-            int count = 0;
-
-            foreach (int ID in variables.Except(solvedVariables))
+            foreach (HashSet<Constraint> group in this.GetGroups(this.Constraints))
             {
-                // Assume cell is safe
-                Inferrer solverSafe = new(this.Grid);
-                solverSafe.Constraints = constraints.Union(solutions).Union([new([ID], 0)]).ToHashSet();
-                solverSafe.Solve();
-
-                HashSet<Constraint> variableSolutionsSafe = solverSafe.Solutions
-                    .Where(i => i.Variables.Intersect(variables).Any())
-                    .Distinct()
-                    .ToHashSet();
-
-                HashSet<Constraint> newSolutions = solutions.Union(variableSolutionsSafe).ToHashSet();
-
-                // Not solved
-                if (newSolutions.Count < variables.Count)
-                {
-                    configurations.UnionWith(GetConfigurations(solverSafe.Constraints.ToHashSet(), newSolutions, depth+1));
-                }
-                // Solved
-                else
-                {
-                    configurations.Add(newSolutions);
-                }
-
-                // Assume cell is mined
-                Inferrer solverMined = new(this.Grid);
-                solverMined.Constraints = constraints.Union(solutions).Union([new([ID], 1)]).ToHashSet();
-                solverMined.Solve();
-
-                HashSet<Constraint> variableSolutionsMined = solverMined.Solutions
-                    .Where(i => i.Variables.Intersect(variables).Any())
-                    .Distinct()
-                    .ToHashSet();
-
-                HashSet<Constraint> newSolutionsMined = solutions.Union(variableSolutionsMined).ToHashSet();
-
-                // Not solved
-                if (newSolutionsMined.Count < variables.Count)
-                {
-                    configurations.UnionWith(GetConfigurations(solverMined.Constraints.ToHashSet(), newSolutionsMined, depth + 1));
-                }
-                // Solved
-                else
-                {
-                    configurations.Add(newSolutionsMined);
-                }
-
-                count++;
+                Configuration config = new(group.SelectMany(i => i.Variables).Distinct().ToList(), []);
+                HashSet<Configuration> groupConfigs = this.GetGroupConfigurations(config);
+                groupConfigs.RemoveWhere(i => i.Assignments.Values.Where(i => i < 0).Any());
+                configurations.Add(groupConfigs.ToList());
             }
 
-            foreach (HashSet<Constraint> config in configurations)
+            List<Configuration> combos = new() { new Configuration([], []) };
+
+            foreach (List<Configuration> inner in configurations)
             {
-                Console.WriteLine($"{depth}: {string.Join(", ", config)}");
+                combos = combos.SelectMany(r => inner.Select(x => r + x)).ToList();
             }
 
-            return configurations;
+            int maxMines = this.Grid.Mines - this.Grid.FlaggedCells.Count;
+
+            combos.RemoveAll(i => i.Sum > maxMines);
+
+            return combos;
         }
 
-        public List<Configuration> GetConfigurations1(List<Constraint> constraints)
+        public HashSet<Configuration> GetGroupConfigurations(Configuration seed, int depth = 0, int maxDepth = 5)
         {
-            List<Configuration> configurations = new();
+            HashSet<Configuration> configs = new();
 
-            Console.WriteLine(string.Join(", ", constraints) + "\n");
+            List<int> variables = seed.Assignments.Keys.ToList();
+            List<int> unsolvedVariables = seed.Assignments.Where(i => i.Value == null).Select(i => i.Key).ToList();
+            List<int> solvedVariables = seed.Assignments.Where(i => i.Value != null).Select(i => i.Key).ToList();
 
-            List<int> variables = constraints.SelectMany(i => i.Variables).Distinct().ToList();
-
-            if (variables.Count == 0)
+            if (unsolvedVariables.Count == 0)
             {
-                return configurations;
+                return [seed];
             }
 
-            int cell = variables.First();
-            //foreach (int cell in variables)
-            //{
-                // Assume cell is safe
-                Constraint safeCell = new([cell], 0);
-                Inferrer solver = new([.. constraints, safeCell]);
-                solver.Solve();
+            int ID = unsolvedVariables.First();
 
-                List<Constraint> solutionSafe = solver.Solutions.ToList();
+            // Assume safe
+            Inferrer solverSafe = new(this.Grid);
+            foreach (int solvedVariable in solvedVariables)
+            {
+                solverSafe.Constraints.Add(new Constraint([solvedVariable], (int)seed.Assignments[solvedVariable]));
+            }
+            solverSafe.Constraints.Add(new Constraint([ID], 0));
 
-                Configuration solverConfig = new(constraints, solutionSafe);
+            solverSafe.Solve();
 
-                if (solverConfig.IsSolved)
+            Configuration newConfigurationSafe = new(variables, solverSafe.Solutions
+                    .Where(i => variables.Contains(i.Variables.First()))
+                    .ToHashSet());
+
+            if (!newConfigurationSafe.Assignments.Where(i => i.Value < 0).Any())
+            {
+                if (newConfigurationSafe.IsSolved)
                 {
-                    configurations.Add(solverConfig);
+                    configs.Add(newConfigurationSafe);
                 }
                 else
                 {
-                    //List<Configuration> recursionSafe = GetConfigurations(solver.Constraints);
-
-                    //foreach (Configuration recursionConstraintSafe in recursionSafe)
-                    //{
-                    //    Configuration temp = new(solverConfig, recursionConstraintSafe);
-                    //    configurations.Add(temp);
-                    //}
+                    if (depth <= maxDepth)
+                    {
+                        configs.UnionWith(GetGroupConfigurations(newConfigurationSafe, depth + 1));
+                    }
                 }
+            }
 
-            // Assume cell is mined
-                Constraint minedCell = new([cell], 0);
-                Inferrer solverMined = new([.. constraints, minedCell]);
-                solverMined.Solve();
+            // Assume mined
+            Inferrer solverMined = new(this.Grid);
+            foreach (int solvedVariable in solvedVariables)
+            {
+                solverMined.Constraints.Add(new Constraint([solvedVariable], (int)seed.Assignments[solvedVariable]));
+            }
+            solverMined.Constraints.Add(new Constraint([ID], 1));
 
-                List<Constraint> solutionMined = [.. solverMined.Solutions];
+            solverMined.Solve();
 
-                Configuration solverConfigMined = new(constraints, solutionMined);
+            Configuration newConfigurationMined = new(variables, solverMined.Solutions
+                    .Where(i => variables.Contains(i.Variables.First()))
+                    .ToHashSet());
 
-                if (solverConfigMined.IsSolved)
+            if (!newConfigurationMined.Assignments.Where(i => i.Value < 0).Any())
+            {
+                if (newConfigurationMined.IsSolved)
                 {
-                    configurations.Add(solverConfigMined);
+                    configs.Add(newConfigurationMined);
                 }
                 else
                 {
-                    //List<Configuration> recursionMined = GetConfigurations(solverMined.Constraints);
-
-                    //foreach (Configuration recursionConstraintMined in recursionMined)
-                    //{
-                    //    Configuration temp = new(solverConfigMined, recursionConstraintMined);
-                    //    configurations.Add(temp);
-                    //}
+                    if (depth <= maxDepth)
+                    {
+                        configs.UnionWith(GetGroupConfigurations(newConfigurationMined, depth + 1));
+                    }
                 }
-            //}
-
-            foreach (Configuration config in configurations)
-            {
-                Console.WriteLine(JsonConvert.SerializeObject(config, Formatting.Indented));
             }
 
-            return configurations;
+            return configs;
         }
     }
 }
