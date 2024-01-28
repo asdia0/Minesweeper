@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Drawing;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -88,6 +89,26 @@ namespace Minesweeper.Solver
             }
 
             Console.WriteLine();
+        }
+
+        public static double nCr(int n, int r)
+        {
+            double tmp = 1;
+            int j = 2;
+            int k = n - r;
+            for (int i = n; i > k; i--)
+            {
+                tmp *= i;
+                while (j <= r && tmp % j == 0)
+                {
+                    tmp /= j++;
+                }
+            }
+            while (j <= r)
+            {
+                tmp /= j++;
+            }
+            return tmp;
         }
     }
 }

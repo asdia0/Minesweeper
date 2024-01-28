@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -40,35 +39,11 @@ namespace Minesweeper.Solver
             }
         }
 
-        /// <summary>
-        /// Adds two configurations that are assumed to be solved.
-        /// </summary>
-        /// <param name="left"></param>
-        /// <param name="right"></param>
-        /// <returns></returns>
         public static Configuration operator +(Configuration left, Configuration right)
         {
             Configuration sum = new();
             sum.Assignments = left.Assignments.Concat(right.Assignments).ToDictionary(i => i.Key, i => i.Value);
             return sum;
         }
-        //public bool Add(Configuration input, out Configuration output)
-        //{
-        //    HashSet<int> nullLHS = this.Assignments.Where(i => i.Value == null).Select(i => i.Key).ToHashSet();
-        //    HashSet<int> nullRHS = input.Assignments.Where(i => i.Value == null).Select(i => i.Key).ToHashSet();
-
-        //    if (nullLHS.IsSupersetOf(nullRHS))
-        //    {
-
-        //        return true;
-        //    }
-        //    else if (nullRHS.IsSupersetOf(nullLHS))
-        //    {
-        //        return true;
-        //    }
-
-        //    output = new();
-        //    return false;
-        //}
     }
 }

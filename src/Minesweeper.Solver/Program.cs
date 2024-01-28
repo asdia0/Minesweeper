@@ -15,9 +15,9 @@ namespace Minesweeper.Solver
 
         public static void Main()
         {
-            //GetWinRate(9, 9, 10);
-            Grid grid = new(16, 16, 40);
-            Solve(grid);
+            GetWinRate(9, 9, 10);
+            //Grid grid = new(16, 16, 40);
+            //Solve(grid);
         }
 
         public static void Main1()
@@ -130,12 +130,18 @@ namespace Minesweeper.Solver
 
         public static int Solve(Grid grid)
         {
+            var timer = Stopwatch.StartNew();
+            timer.Start();
+
             // Start at corner.
             grid.OpenCell(grid.Cells[0]);
 
             while (grid.State == State.ToBegin || grid.State == State.Ongoing)
             {
-                //Utility.WriteColor(grid.ShowKnown() + "\n");
+                if (timer.Elapsed.TotalSeconds > 5)
+                {
+                    Utility.WriteColor(grid.ShowKnown() + "\n");
+                }
 
                 Inferrer solver = new(grid);
 
@@ -165,33 +171,26 @@ namespace Minesweeper.Solver
                 }
                 else
                 {
-                    Utility.WriteColor(grid.ShowKnown() + "\n");
-
-                    Inferrer solver1 = new(grid);
-                    solver1.Solve();
+                    //Utility.WriteColor(grid.ShowKnown() + "\n");
 
                     Guesser guesser = new(grid);
 
-                    foreach (HashSet<Constraint> group in guesser.GetGroups(guesser.Constraints))
-                    {
-                        Console.WriteLine(string.Join(", ", group));
-                    }
+                    Dictionary<int, double> scores = guesser.GetScore();
 
-                    foreach (Configuration config in guesser.GetAllConfigurations())
-                    {
-                        Console.WriteLine(JsonConvert.SerializeObject(config.Assignments));
-                    }
+                    double maxScore = scores.OrderByDescending(kvp => kvp.Value).First().Value;
+                    List<Cell> maxScorers = scores.Where(i => i.Value == maxScore).Select(i => i.Key).Select(j => grid.Cells.Where(i => i.Point.ID == j).First()).ToList();
+                    Cell toOpen = maxScorers.OrderBy(i => i.AdjacentCells.Intersect(grid.ExposedCells).Count()).First();
 
+                    grid.OpenCell(toOpen);
 
+                    //Console.WriteLine(JsonConvert.SerializeObject(guesser.GetScore()));
 
-                    Console.WriteLine("End");
+                    //Console.WriteLine("End");
 
-                    return 1;
+                    //Random rng = new();
+                    //Cell guess = grid.UnknownCells[rng.Next(grid.UnknownCells.Count)];
 
-                    Random rng = new();
-                    Cell guess = grid.UnknownCells[rng.Next(grid.UnknownCells.Count)];
-
-                    grid.OpenCell(guess);
+                    //grid.OpenCell(guess);
 
                     //Console.WriteLine(grid.ShowKnown());
                     //Console.WriteLine();

@@ -1,12 +1,19 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Net;
+using System.Numerics;
+using System.Threading;
 
 namespace Minesweeper.Solver
 {
     public class Guesser
     {
+        public double ExpectedFloatingMines = 0;
+
         public Grid Grid { get; set; }
 
         public HashSet<Constraint> Constraints { get; set; }
@@ -125,9 +132,8 @@ namespace Minesweeper.Solver
             return groups;
         }
 
-        public List<Configuration> GetAllConfigurations()
+        public HashSet<Configuration> GetAllConfigurations()
         {
-
             List<List<Configuration>> configurations = new();
 
             foreach (HashSet<Constraint> group in this.GetGroups(this.Constraints))
@@ -149,7 +155,7 @@ namespace Minesweeper.Solver
 
             combos.RemoveAll(i => i.Sum > maxMines);
 
-            return combos;
+            return combos.ToHashSet();
         }
 
         public HashSet<Configuration> GetGroupConfigurations(Configuration seed, int depth = 0, int maxDepth = 5)
@@ -187,12 +193,13 @@ namespace Minesweeper.Solver
                 {
                     configs.Add(newConfigurationSafe);
                 }
+                else if (depth <= maxDepth)
+                {
+                    configs.UnionWith(GetGroupConfigurations(newConfigurationSafe, depth + 1));
+                }
                 else
                 {
-                    if (depth <= maxDepth)
-                    {
-                        configs.UnionWith(GetGroupConfigurations(newConfigurationSafe, depth + 1));
-                    }
+                    configs.UnionWith([GetOneConfiguration(newConfigurationSafe)]);
                 }
             }
 
@@ -216,16 +223,210 @@ namespace Minesweeper.Solver
                 {
                     configs.Add(newConfigurationMined);
                 }
+                else if (depth <= maxDepth)
+                {
+                    configs.UnionWith(GetGroupConfigurations(newConfigurationMined, depth + 1));
+                }
                 else
                 {
-                    if (depth <= maxDepth)
+                    configs.UnionWith([GetOneConfiguration(newConfigurationMined)]);
+                }
+            }
+
+            return configs.Where(i => i.Assignments != null).ToHashSet();
+        }
+
+        public Configuration GetOneConfiguration(Configuration seed)
+        {
+            List<int> variables = seed.Assignments.Keys.ToList();
+            List<int> unsolvedVariables = seed.Assignments.Where(i => i.Value == null).Select(i => i.Key).ToList();
+            List<int> solvedVariables = seed.Assignments.Where(i => i.Value != null).Select(i => i.Key).ToList();
+
+            int ID = unsolvedVariables.First();
+
+            // Assume safe
+            Inferrer solverSafe = new(this.Grid);
+            foreach (int solvedVariable in solvedVariables)
+            {
+                solverSafe.Constraints.Add(new Constraint([solvedVariable], (int)seed.Assignments[solvedVariable]));
+            }
+            solverSafe.Constraints.Add(new Constraint([ID], 0));
+
+            solverSafe.Solve();
+
+            Configuration newConfigurationSafe = new(variables, solverSafe.Solutions
+                    .Where(i => variables.Contains(i.Variables.First()))
+                    .ToHashSet());
+
+            if (!newConfigurationSafe.Assignments.Where(i => i.Value < 0).Any())
+            {
+                if (newConfigurationSafe.IsSolved)
+                {
+                    return newConfigurationSafe;
+                }
+                else
+                {
+                    return GetOneConfiguration(newConfigurationSafe);
+                }
+            }
+
+            // Assume mined
+            Inferrer solverMined = new(this.Grid);
+            foreach (int solvedVariable in solvedVariables)
+            {
+                solverMined.Constraints.Add(new Constraint([solvedVariable], (int)seed.Assignments[solvedVariable]));
+            }
+            solverMined.Constraints.Add(new Constraint([ID], 1));
+
+            solverMined.Solve();
+
+            Configuration newConfigurationMined = new(variables, solverMined.Solutions
+                    .Where(i => variables.Contains(i.Variables.First()))
+                    .ToHashSet());
+
+            if (!newConfigurationMined.Assignments.Where(i => i.Value < 0).Any())
+            {
+                if (newConfigurationMined.IsSolved)
+                {
+                    return newConfigurationMined;
+                }
+                else
+                {
+                    return GetOneConfiguration(newConfigurationMined);
+                }
+            }
+
+            return new();
+        }
+
+        public Dictionary<int, double> GetSafety(HashSet<Configuration> configurations)
+        {
+            Dictionary<int, double> safetyValues = new();
+
+            double expectedExposedMines = 0;
+
+            foreach (int exposedCell in this.Grid.ExposedCells.Select(i => i.Point.ID))
+            {
+                double numerator = 0;
+                double denominator = 0;
+
+                foreach (Configuration configuration in configurations)
+                {
+                    denominator += Utility.nCr(this.Grid.FloatingCells.Count, this.Grid.Mines - this.Grid.FlaggedCells.Count - configuration.Sum);
+
+                    if (configuration.Assignments[exposedCell] == 0)
                     {
-                        configs.UnionWith(GetGroupConfigurations(newConfigurationMined, depth + 1));
+                        numerator += Utility.nCr(this.Grid.FloatingCells.Count, this.Grid.Mines - this.Grid.FlaggedCells.Count - configuration.Sum);
+                    }
+                }
+
+                double safetyValue = numerator / denominator;
+                expectedExposedMines += 1 - safetyValue;
+
+                safetyValues.Add(exposedCell, safetyValue);
+            }
+
+            this.ExpectedFloatingMines = this.Grid.Mines - this.Grid.FlaggedCells.Count - expectedExposedMines;
+
+            double floatingSafety = 1 - this.ExpectedFloatingMines / this.Grid.FloatingCells.Count;
+
+            foreach (int floatingCell in this.Grid.FloatingCells.Select(i => i.Point.ID))
+            {
+                safetyValues.Add(floatingCell, floatingSafety);
+            }
+
+            return safetyValues;
+        }
+
+        public double GetProgressFloating(int KFA)
+        {
+            double progress = 1;
+
+            for (int i = 1; i <= KFA + 1; i++)
+            {
+                progress *= (1 - this.ExpectedFloatingMines / (this.Grid.FloatingCells.Count - KFA - 1 + i));
+            }
+
+            return progress;
+        }
+
+        public double GetProgressExposed(Cell cell, HashSet<Configuration> configurations)
+        {
+            int ID = cell.Point.ID;
+
+            // Find all minecounts that yield logic
+            List<int> bracketN = new();
+            for (int i = 0; i <= cell.AdjacentCells.Count; i++)
+            {
+                Inferrer solver = new(this.Grid);
+                solver.Constraints.Add(new(cell.AdjacentCells.Select(i => i.Point.ID).ToHashSet(), i));
+                solver.Solve();
+
+                if (solver.Solutions.Any() && !solver.Solutions.Where(i => i.Sum < 0).Any())
+                {
+                    bracketN.Add(i);
+                }
+            }
+
+            double numerator = 0;
+            double denominator = 0;
+
+            foreach (Configuration configuration in configurations)
+            {
+                if (configuration.Assignments[ID] == 0)
+                {
+                    denominator += Utility.nCr(this.Grid.FloatingCells.Count, this.Grid.Mines - this.Grid.FlaggedCells.Count - configuration.Sum);
+
+                    if (bracketN.Contains(cell.AdjacentCells.Intersect(this.Grid.ExposedCells).Select(i => (int)configuration.Assignments[i.Point.ID]).Sum()))
+                    {
+                        numerator += Utility.nCr(this.Grid.FloatingCells.Count, this.Grid.Mines - this.Grid.FlaggedCells.Count - configuration.Sum);
                     }
                 }
             }
 
-            return configs;
+            return numerator / denominator;
+        }
+
+        public Dictionary<int, double> GetScore()
+        {
+            Dictionary<int, double> score = new();
+
+            HashSet<Configuration> configurations = this.GetAllConfigurations();
+
+            Dictionary<int, double> safety = GetSafety(configurations);
+
+            for (int i = 0; i <= 8; i++)
+            {
+                double floatingProgress = GetProgressFloating(i);
+
+                foreach (Cell cell in this.Grid.FloatingCells.Where(j => j.AdjacentCells.Intersect(this.Grid.FloatingCells).Count() == i))
+                {
+                    int ID = cell.Point.ID;
+                    score.Add(ID, safety[ID] * floatingProgress);
+                }
+            }
+
+            double maxSafety = safety.Values.OrderByDescending(i => i).First();
+
+            foreach (Cell exposedCell in this.Grid.ExposedCells)
+            {
+                int ID = exposedCell.Point.ID;
+
+                if (safety[ID] >= 0.9 * maxSafety)
+                {
+                    score.Add(ID, safety[ID] * GetProgressExposed(exposedCell, configurations));
+                }
+            }
+
+            foreach (int cell in score.Keys)
+            {
+                if (safety[cell] == 1)
+                {
+                    score[cell] = 1;
+                }
+            }
+
+            return score;
         }
     }
 }
