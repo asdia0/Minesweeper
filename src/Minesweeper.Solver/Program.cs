@@ -138,11 +138,6 @@ namespace Minesweeper.Solver
 
             while (grid.State == State.ToBegin || grid.State == State.Ongoing)
             {
-                if (timer.Elapsed.TotalSeconds > 5)
-                {
-                    Utility.WriteColor(grid.ShowKnown() + "\n");
-                }
-
                 Inferrer solver = new(grid);
 
                 solver.Solve();
@@ -150,8 +145,6 @@ namespace Minesweeper.Solver
                 // Update cells
                 if (solver.Solutions.Count != 0)
                 {
-                    //Utility.WriteColor(grid.ShowKnown() + "\n");
-
                     foreach (Constraint solution in solver.Solutions)
                     {
                         Cell cell = grid.Cells.Where(i => i.Point.ID == solution.Variables.First()).First();
@@ -186,14 +179,6 @@ namespace Minesweeper.Solver
                     //Console.WriteLine(JsonConvert.SerializeObject(guesser.GetScore()));
 
                     //Console.WriteLine("End");
-
-                    //Random rng = new();
-                    //Cell guess = grid.UnknownCells[rng.Next(grid.UnknownCells.Count)];
-
-                    //grid.OpenCell(guess);
-
-                    //Console.WriteLine(grid.ShowKnown());
-                    //Console.WriteLine();
                 }
             }
 
