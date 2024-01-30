@@ -17,6 +17,8 @@ namespace Minesweeper.Solver
         /// </summary>
         public HashSet<Constraint> Solutions { get; set; }
 
+        public bool Contradiction { get; set; }
+
         /// <summary>
         /// Initalizes a new instance of <see cref="Inferrer"/> class.
         /// </summary>
@@ -66,7 +68,7 @@ namespace Minesweeper.Solver
                 RemoveUnnecessaryConstraints();
                 UpdateSolvedConstraints();
 
-                bool runTemp = Constraints.Except(oldConstraints).Any();
+                bool runTemp = Constraints.Except(oldConstraints).Any() && !Contradiction;
 
                 oldConstraints = Constraints.ToList();
 
@@ -134,6 +136,11 @@ namespace Minesweeper.Solver
 
                     if (canSubtract)
                     {
+                        if (difference.Sum < 0)
+                        {
+                            this.Contradiction = true;
+                        }
+
                         this.Constraints.Add(difference);
                     }
                 }

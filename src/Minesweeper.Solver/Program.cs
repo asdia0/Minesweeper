@@ -108,7 +108,7 @@ namespace Minesweeper.Solver
                 }
                 previousWinRate = currentWinRate;
 
-                if (i % 100 == 0)
+                if (i % 10 == 0)
                 {
                     double timeTaken = timer.Elapsed.TotalSeconds;
                     Console.WriteLine($"{length}x{width}/{mines}: {wins} wins out of {i} attempts ({timeTaken / i}s per attempt)");
@@ -130,9 +130,6 @@ namespace Minesweeper.Solver
 
         public static int Solve(Grid grid)
         {
-            var timer = Stopwatch.StartNew();
-            timer.Start();
-
             // Start at corner.
             grid.OpenCell(grid.Cells[0]);
 
@@ -175,10 +172,6 @@ namespace Minesweeper.Solver
                     Cell toOpen = maxScorers.OrderBy(i => i.AdjacentCells.Intersect(grid.ExposedCells).Count()).First();
 
                     grid.OpenCell(toOpen);
-
-                    //Console.WriteLine(JsonConvert.SerializeObject(guesser.GetScore()));
-
-                    //Console.WriteLine("End");
                 }
             }
 
