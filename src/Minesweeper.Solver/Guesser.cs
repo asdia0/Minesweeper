@@ -7,6 +7,8 @@ namespace Minesweeper.Solver
 {
     public class Guesser
     {
+        public Dictionary<Configuration, double> Weights = new();
+
         public Dictionary<int, double> CombinationWhereSafe = new();
 
         public double ExpectedFloatingMines = 0;
@@ -296,6 +298,48 @@ namespace Minesweeper.Solver
             return new();
         }
 
+        public Dictionary<int, double> GetSafetyConfig(HashSet<Configuration> configurations)
+        {
+            Dictionary<int, double> safetyValues = new();
+
+            foreach (Configuration configuration in configurations)
+            {
+                this.Weights.Add(configuration, Utility.nCr(this.Grid.FloatingCells.Count, this.Grid.Mines - this.Grid.FlaggedCells.Count - configuration.Sum));
+            }
+
+            foreach (int unknownCell in this.Grid.UnknownCells.Select(i => i.Point.ID))
+            {
+                safetyValues.Add(unknownCell, 0);
+            }
+
+            double denominator = Weights.Values.Sum();
+
+            foreach (Configuration configuration in configurations)
+            {
+                foreach (int exposedCell in this.Grid.ExposedCells.Select(i => i.Point.ID).Intersect(configuration.Assignments.Where(i => i.Value == 0).Select(i => i.Key)))
+                {
+                    safetyValues[exposedCell] += Weights[configuration];
+                }
+            }
+
+            foreach (int exposedCell in safetyValues.Keys)
+            {
+                CombinationWhereSafe.Add(exposedCell, safetyValues[exposedCell]);
+                safetyValues[exposedCell] = safetyValues[exposedCell] / denominator;
+            }
+
+            this.ExpectedFloatingMines = this.Grid.Mines - this.Grid.FlaggedCells.Count - safetyValues.Count + safetyValues.Values.Sum();
+
+            double floatingSafety = 1 - this.ExpectedFloatingMines / this.Grid.FloatingCells.Count;
+
+            foreach (int floatingCell in this.Grid.FloatingCells.Select(i => i.Point.ID))
+            {
+                safetyValues[floatingCell] = floatingSafety;
+            }
+
+            return safetyValues;
+        }
+
         public Dictionary<int, double> GetSafety(HashSet<Configuration> configurations)
         {
             var timer = new Stopwatch();
@@ -304,17 +348,17 @@ namespace Minesweeper.Solver
             Dictionary<int, double> safetyValues = new();
 
             double expectedExposedMines = 0;
-            double denominator = configurations.Select(i => Utility.nCr(this.Grid.FloatingCells.Count, this.Grid.Mines - this.Grid.FlaggedCells.Count - i.Sum)).Sum();
+
+            foreach (Configuration configuration in configurations)
+            {
+                this.Weights.Add(configuration, Utility.nCr(this.Grid.FloatingCells.Count, this.Grid.Mines - this.Grid.FlaggedCells.Count - configuration.Sum));
+            }
+
+            double denominator = Weights.Values.Sum();
             
             foreach (int exposedCell in this.Grid.ExposedCells.Select(i => i.Point.ID))
             {
-                double numerator = 0;
-
-                foreach (Configuration configuration in configurations.Where(i => i.Assignments[exposedCell] == 0))
-                {
-                    numerator += Utility.nCr(this.Grid.FloatingCells.Count, this.Grid.Mines - this.Grid.FlaggedCells.Count - configuration.Sum);
-                }
-
+                double numerator = configurations.Where(i => i.Assignments[exposedCell] == 0).Select(i => Weights[i]).Sum();
                 CombinationWhereSafe.Add(exposedCell, numerator);
 
                 double safetyValue = numerator / denominator;
@@ -331,8 +375,6 @@ namespace Minesweeper.Solver
             {
                 safetyValues.Add(floatingCell, floatingSafety);
             }
-
-            //Console.WriteLine($"Get Safety [{this.Grid.ExposedCells.Count}]: {timer.Elapsed.TotalSeconds}");
 
             return safetyValues;
         }
@@ -364,7 +406,7 @@ namespace Minesweeper.Solver
                 solver.Constraints.Add(new(cell.AdjacentCells.Select(i => i.Point.ID).ToHashSet(), i));
                 solver.Solve();
 
-                if (solver.Solutions.Any() && !solver.Solutions.Where(i => i.Sum < 0).Any())
+                if (solver.Solutions.Any() && !solver.Contradiction)
                 {
                     bracketN.Add(i);
                 }
@@ -379,7 +421,7 @@ namespace Minesweeper.Solver
                 {
                     if (bracketN.Contains(cell.AdjacentCells.Intersect(this.Grid.ExposedCells).Select(i => (int)configuration.Assignments[i.Point.ID]).Sum()))
                     {
-                        numerator += Utility.nCr(this.Grid.FloatingCells.Count, this.Grid.Mines - this.Grid.FlaggedCells.Count - configuration.Sum);
+                        numerator += Weights[configuration];
                     }
                 }
             }
@@ -393,7 +435,7 @@ namespace Minesweeper.Solver
 
             HashSet<Configuration> configurations = this.GetAllConfigurations();
 
-            Dictionary<int, double> safety = GetSafety(configurations);
+            Dictionary<int, double> safety = GetSafetyConfig(configurations);
 
             for (int i = 0; i <= 8; i++)
             {

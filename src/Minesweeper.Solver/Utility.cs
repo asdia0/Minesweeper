@@ -1,13 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Drawing;
 using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
+using Fractions;
 
 namespace Minesweeper.Solver
 {
@@ -109,6 +103,44 @@ namespace Minesweeper.Solver
                 tmp /= j++;
             }
             return tmp;
+        }
+
+        public static Fraction Mediant(Fraction left, Fraction right)
+        {
+            return new(left.Numerator + right.Numerator, left.Denominator + right.Denominator, true);
+        }
+
+        public static List<Fraction> GenerateLeftSternBocrotSequence(int order)
+        {
+            if (order < 1)
+            {
+                return [];
+            }
+
+            if (order == 1)
+            {
+                return [new(0, 1, false), new(1, 2), new(1, 1, false)];
+            }
+
+            List<Fraction> previousSequence = GenerateLeftSternBocrotSequence(order - 1);
+            List<Fraction> currentSequence = [];
+
+            for (int i = 1; i <= previousSequence.Count - 2; i++)
+            {
+                if (i % 2 == 0)
+                {
+                    continue;
+                }
+
+                currentSequence.Add(Utility.Mediant(previousSequence[i - 1], previousSequence[i]));
+                currentSequence.Add(Utility.Mediant(previousSequence[i], previousSequence[i + 1]));
+            }
+
+            currentSequence.AddRange(previousSequence);
+
+            currentSequence.Sort();
+
+            return currentSequence;
         }
     }
 }
