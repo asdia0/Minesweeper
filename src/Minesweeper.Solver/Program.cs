@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using Newtonsoft.Json;
 using Fractions;
-using System.Net;
 
 namespace Minesweeper.Solver
 {
@@ -15,10 +13,12 @@ namespace Minesweeper.Solver
 
         public const int MaxAttempts = 1000;
 
+        public const int UpdateInterval = 10;
+
         public static void Main()
         {
             //Main1();
-            GetWinRate(16, 16, 40);
+            GetWinRate(9, 9, 10);
         }
 
         public static void Main2()
@@ -177,16 +177,13 @@ namespace Minesweeper.Solver
         {
             List<(int, int, int)> res = [];
 
-            //for (int i = 1; i <= maxDim; i++)
-            //{
-                for (int j = 1; j <= maxDim; j++)
+            for (int i = 1; i <= maxDim; i++)
+            {
+                for (int m = 1; m < maxDim * i; m++)
                 {
-                    for (int m = 1; m < maxDim * j; m++)
-                    {
-                        res.Add((j, maxDim, m));
-                    }
+                    res.Add((i, maxDim, m));
                 }
-            //}
+            }
 
             return res;
         }
@@ -199,7 +196,7 @@ namespace Minesweeper.Solver
 
             Console.WriteLine("---");
 
-            var timer = new Stopwatch();
+            Stopwatch timer = new();
             timer.Start();
 
             for (int i = 1; i <= MaxAttempts; i++)
@@ -214,12 +211,12 @@ namespace Minesweeper.Solver
                         EndDimension(length, width, mines, currentWinRate);
                     }
                 }
+
                 previousWinRate = currentWinRate;
 
-                if (i % 1 == 0)
+                if (i % UpdateInterval == 0)
                 {
-                    double timeTaken = timer.Elapsed.TotalSeconds;
-                    Console.WriteLine($"{length}x{width}/{mines}: {wins} wins out of {i} attempts ({timeTaken / i}s per attempt)");
+                    Console.WriteLine($"{length}x{width}/{mines}: {wins} wins out of {i} attempts ({timer.Elapsed.TotalSeconds / i}s per attempt)");
                 }
             }
 
@@ -228,74 +225,64 @@ namespace Minesweeper.Solver
             return previousWinRate;
         }
 
-        public static void EndDimension(int length, int width, int mines, decimal winrate)
-        {
-            using (StreamWriter sw = File.AppendText(FileName))
-            {
-                sw.WriteLine($"{length},{width},{mines},{winrate}");
-            }
-        }
-
         public static int Solve(Grid grid)
         {
             // Start at corner.
             grid.OpenCell(grid.Cells[0]);
 
-            while (grid.State == State.ToBegin || grid.State == State.Ongoing)
+            while (grid.State == State.Ongoing)
             {
                 Inferrer solver = new(grid);
-
                 solver.Solve();
 
-                // Update cells
+                // Infer
                 if (solver.Solutions.Count != 0)
                 {
                     foreach (Constraint solution in solver.Solutions)
                     {
-                        Cell cell = grid.Cells.Where(i => i.Point.ID == solution.Variables.First()).First();
+                        Cell cell = Utility.IDToCell(grid, solution.Variables.First());
 
+                        // Update cells
                         switch (solution.Sum)
                         {
                             case 0:
                                 grid.OpenCell(cell);
                                 break;
                             case 1:
-                                cell.HasFlag = true;
+                                grid.FlagCell(cell);
                                 break;
                             default:
-                                throw new Exception();
+                                throw new MinesweeperException("Invalid solution: " + solution);
                         }
                     }
                 }
+                // Guess
                 else
                 {
-                    //Utility.WriteColor(grid.ShowKnown() + "\n");
-
                     Guesser guesser = new(grid);
-
                     Dictionary<int, double> scores = guesser.GetScore();
 
-                    if (scores.ContainsValue(1) || scores.ContainsKey(0))
+                    // Open guaranteed safe cells.
+                    foreach (Cell safeCells in Utility.IDsToCells(grid, scores.Where(i => i.Value == 1).Select(i => i.Key)))
                     {
-                        foreach (Cell safeCells in scores.Where(i => i.Value == 1).Select(i => i.Key).Select(i => grid.Cells.Where(j => j.Point.ID == i).First()))
-                        {
-                            grid.OpenCell(safeCells);
-                        }
-
-                        foreach (Cell minedCells in scores.Where(i => i.Value == 1).Select(i => i.Key).Select(i => grid.Cells.Where(j => j.Point.ID == i).First()))
-                        {
-                            minedCells.HasFlag = true;
-                        }
+                        grid.OpenCell(safeCells);
                     }
-                    else
+
+                    // Flag guaranteed mined cells.
+                    foreach (Cell minedCells in Utility.IDsToCells(grid, scores.Where(i => i.Value == 0).Select(i => i.Key)))
                     {
-
-                        double maxScore = scores.OrderByDescending(kvp => kvp.Value).First().Value;
-                        List<Cell> maxScorers = scores.Where(i => i.Value == maxScore).Select(i => i.Key).Select(j => grid.Cells.Where(i => i.Point.ID == j).First()).ToList();
-                        Cell toOpen = maxScorers.OrderBy(i => i.AdjacentCells.Count).ThenByDescending(i => i.AdjacentCells.Intersect(grid.OpenedCells).Count()).First();
-
-                        grid.OpenCell(toOpen);
+                        grid.FlagCell(minedCells);
                     }
+
+                    // Determine cell to guess
+                    double maxScore = scores.OrderByDescending(kvp => kvp.Value).First().Value;
+
+                    Cell toOpen = Utility.IDsToCells(grid, scores.Where(i => i.Value == maxScore).Select(i => i.Key))
+                        .OrderBy(i => i.AdjacentCells.Count)
+                        .ThenByDescending(i => i.AdjacentCells.Intersect(grid.OpenedCells).Count())
+                        .First();
+
+                    grid.OpenCell(toOpen);
                 }
             }
 
@@ -306,6 +293,14 @@ namespace Minesweeper.Solver
             else
             {
                 return 0;
+            }
+        }
+
+        public static void EndDimension(int length, int width, int mines, decimal winrate)
+        {
+            using (StreamWriter sw = File.AppendText(FileName))
+            {
+                sw.WriteLine($"{length},{width},{mines},{winrate}");
             }
         }
     }

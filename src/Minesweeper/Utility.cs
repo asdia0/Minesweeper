@@ -1,7 +1,4 @@
-﻿using System.Text.RegularExpressions;
-using System;
-
-namespace Minesweeper
+﻿namespace Minesweeper
 {
     /// <summary>
     /// A class for utility functions.

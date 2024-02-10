@@ -281,6 +281,18 @@
         }
 
         /// <summary>
+        /// Flags a cell if it is unopened.
+        /// </summary>
+        /// <param name="cell">The <see cref="Cell">cell</see> to flag.</param>
+        public void FlagCell(Cell cell)
+        {
+            if (!cell.IsOpen)
+            {
+                cell.HasFlag = true;
+            }
+        }
+
+        /// <summary>
         /// Opens a  <see cref="Cell">cell</see> and all adjacent cells if the number of flags surrounding it matches its <see cref="Cell.MineCount">count</see>.
         /// </summary>
         /// <param name="cell">The <see cref="Cell">cell</see> to chord on.</param>

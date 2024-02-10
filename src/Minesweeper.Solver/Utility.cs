@@ -5,13 +5,63 @@ using Fractions;
 
 namespace Minesweeper.Solver
 {
+    /// <summary>
+    /// A class for utility functions.
+    /// </summary>
     public static class Utility
     {
+        /// <summary>
+        /// Converts an ID into its corresponding <see cref="Cell">cell</see>.
+        /// </summary>
+        /// <param name="grid"></param>
+        /// <param name="ID"></param>
+        /// <returns></returns>
+        public static Cell IDToCell(Grid grid, int ID)
+        {
+            return grid.Cells.Where(i => i.Point.ID == ID).First();
+        }
+
+        /// <summary>
+        /// Converts a cell into its corresponding ID.
+        /// </summary>
+        /// <param name="cell"></param>
+        /// <returns></returns>
+        public static int CellToID(Cell cell)
+        {
+            return cell.Point.ID;
+        }
+
+        /// <summary>
+        /// Converts a list of IDs into their corresponding <see cref="Cell">cells</see>.
+        /// </summary>
+        /// <param name="grid"></param>
+        /// <param name="IDs"></param>
+        /// <returns></returns>
+        public static IEnumerable<Cell> IDsToCells(Grid grid, IEnumerable<int> IDs)
+        {
+            return IDs.Select(i => grid.Cells.Where(j => j.Point.ID == i).First());
+        }
+
+        /// <summary>
+        /// Converts a list of cells into their corresponding IDs.
+        /// </summary>
+        /// <param name="cells"></param>
+        /// <returns></returns>
+        public static IEnumerable<int> CellsToIDs(IEnumerable<Cell> cells)
+        {
+            return cells.Select(i => i.Point.ID);
+        }
+
+        /// <summary>
+        /// Gets a list of disjoint subsets.
+        /// </summary>
+        /// <param name="lists"></param>
+        /// <returns></returns>
         public static HashSet<HashSet<int>> GetGroups(HashSet<HashSet<int>> lists)
         {
-            HashSet<HashSet<int>> groups = new();
+            HashSet<HashSet<int>> groups = [];
 
-            Dictionary<int, HashSet<int>> groupsOneDirectional = new();
+            Dictionary<int, HashSet<int>> groupsOneDirectional = [];
 
             List<int> numbers = lists.SelectMany(i => i).Distinct().ToList();
 
@@ -56,88 +106,82 @@ namespace Minesweeper.Solver
             return groups.Where(i => i.Count > 1).ToHashSet();
         }
 
-        public static void WriteColor(string message)
+        /// <summary>
+        /// Prints a coloured <see cref="Grid.ShowKnown"/>.
+        /// </summary>
+        /// <param name="message"></param>
+        public static void WriteColor(Grid grid)
         {
+            string message = grid.ShowKnown();
+
             for (int i = 0; i < message.Length; i++)
             {
                 char c = message[i];
 
-                switch (c)
+                Console.ForegroundColor = c switch
                 {
-                    case 'F':
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        break;
-                    case '0':
-                        Console.ForegroundColor = ConsoleColor.DarkGray;
-                        break;
-                    case '?':
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                        break;
-                    default:
-                        Console.ForegroundColor = ConsoleColor.White;
-                        break;
-                }
-
+                    'F' => ConsoleColor.Red,
+                    '0' => ConsoleColor.DarkGray,
+                    '?' => ConsoleColor.Yellow,
+                    _ => ConsoleColor.White,
+                };
                 Console.Write(c);
                 Console.ResetColor();
             }
 
-            Console.WriteLine();
+            Console.Write("\n\n");
         }
 
-        public static double nCr(int n, int r)
+        /// <summary>
+        /// Returns the binomial coefficient of <paramref name="n"/> and <paramref name="k"/>.
+        /// </summary>
+        /// <param name="n"></param>
+        /// <param name="k"></param>
+        /// <returns></returns>
+        public static double Choose(int n, int k)
         {
-            if (r > n - r) r = n - r; // because C(n, r) == C(n, n - r)
+            if (k > n - k) k = n - k; // because C(n, r) == C(n, n - r)
             double ans = 1;
             int i;
 
-            for (i = 1; i <= r; i++)
+            for (i = 1; i <= k; i++)
             {
-                ans *= n - r + i;
+                ans *= n - k + i;
                 ans /= i;
             }
 
             return ans;
         }
 
-        //public static double nCr(int n, int r)
-        //{
-        //    double tmp = 1;
-        //    int j = 2;
-        //    int k = n - r;
-        //    for (int i = n; i > k; i--)
-        //    {
-        //        tmp *= i;
-        //        while (j <= r && tmp % j == 0)
-        //        {
-        //            tmp /= j++;
-        //        }
-        //    }
-        //    while (j <= r)
-        //    {
-        //        tmp /= j++;
-        //    }
-        //    return tmp;
-        //}
-
+        /// <summary>
+        /// Gets the mediant of two fractions.
+        /// </summary>
+        /// <param name="left"></param>
+        /// <param name="right"></param>
+        /// <returns></returns>
         public static Fraction Mediant(Fraction left, Fraction right)
         {
             return new(left.Numerator + right.Numerator, left.Denominator + right.Denominator, true);
         }
 
-        public static List<Fraction> GenerateLeftSternBocrotSequence(int order)
+        /// <summary>
+        /// Returns a list of all proper fractions in the <paramref name="n"/>-th Stern-Bocrot sequence.
+        /// </summary>
+        /// <param name="n"></param>
+        /// <returns></returns>
+        public static List<Fraction> GenerateLeftSternBocrotSequence(int n)
         {
-            if (order < 1)
+            if (n < 1)
             {
                 return [];
             }
 
-            if (order == 1)
+            if (n == 1)
             {
                 return [new(0, 1, false), new(1, 2), new(1, 1, false)];
             }
 
-            List<Fraction> previousSequence = GenerateLeftSternBocrotSequence(order - 1);
+            List<Fraction> previousSequence = GenerateLeftSternBocrotSequence(n - 1);
             List<Fraction> currentSequence = [];
 
             for (int i = 1; i <= previousSequence.Count - 2; i++)
@@ -147,8 +191,8 @@ namespace Minesweeper.Solver
                     continue;
                 }
 
-                currentSequence.Add(Utility.Mediant(previousSequence[i - 1], previousSequence[i]));
-                currentSequence.Add(Utility.Mediant(previousSequence[i], previousSequence[i + 1]));
+                currentSequence.Add(Mediant(previousSequence[i - 1], previousSequence[i]));
+                currentSequence.Add(Mediant(previousSequence[i], previousSequence[i + 1]));
             }
 
             currentSequence.AddRange(previousSequence);
