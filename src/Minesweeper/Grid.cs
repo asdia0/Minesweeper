@@ -189,22 +189,13 @@
             this.Cells = [];
 
             // Randomly generate mines.
-            bool[] minesArray = new bool[this.Length * this.Width];
-            Random rand = new();
-            while (mines > 0)
-            {
-                int randInt = rand.Next(this.Length * this.Width);
-                if (!minesArray[randInt])
-                {
-                    minesArray[randInt] = true;
-                    mines--;
-                }
-            }
+            Random rnd = new();
+            List<int> minedIDs = Enumerable.Range(0, this.Length * this.Width).OrderBy(i => rnd.Next()).Take(mines).ToList();
 
             // Create cells.
             for (int index = 0; index < this.Length * this.Width; index++)
             {
-                this.Cells.Add(new(this, new(length, width, Utility.CellIndexToCoordinates(index, this.Width)), minesArray[index]));
+                this.Cells.Add(new(this, new(length, width, Utility.CellIndexToCoordinates(index, this.Width)), minedIDs.Contains(index)));
             }
         }
 
@@ -314,7 +305,7 @@
         ///     while others are represented by their <see cref="Cell.MineCount">mine count</see>.
         /// </summary>
         /// <returns>A <see cref="string"/> representation of the <see cref="Grid">grid</see>.</returns>
-        public string ShowKnown()
+        public string ToStringKnown()
         {
             string str = string.Empty;
 

@@ -107,12 +107,12 @@ namespace Minesweeper.Solver
         }
 
         /// <summary>
-        /// Prints a coloured <see cref="Grid.ShowKnown"/>.
+        /// Prints a coloured <see cref="Grid.ToStringKnown"/>.
         /// </summary>
         /// <param name="message"></param>
         public static void WriteColor(Grid grid)
         {
-            string message = grid.ShowKnown();
+            string message = grid.ToStringKnown();
 
             for (int i = 0; i < message.Length; i++)
             {
