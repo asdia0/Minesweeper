@@ -87,23 +87,38 @@ namespace Minesweeper.Solver
 
         public static double nCr(int n, int r)
         {
-            double tmp = 1;
-            int j = 2;
-            int k = n - r;
-            for (int i = n; i > k; i--)
+            if (r > n - r) r = n - r; // because C(n, r) == C(n, n - r)
+            double ans = 1;
+            int i;
+
+            for (i = 1; i <= r; i++)
             {
-                tmp *= i;
-                while (j <= r && tmp % j == 0)
-                {
-                    tmp /= j++;
-                }
+                ans *= n - r + i;
+                ans /= i;
             }
-            while (j <= r)
-            {
-                tmp /= j++;
-            }
-            return tmp;
+
+            return ans;
         }
+
+        //public static double nCr(int n, int r)
+        //{
+        //    double tmp = 1;
+        //    int j = 2;
+        //    int k = n - r;
+        //    for (int i = n; i > k; i--)
+        //    {
+        //        tmp *= i;
+        //        while (j <= r && tmp % j == 0)
+        //        {
+        //            tmp /= j++;
+        //        }
+        //    }
+        //    while (j <= r)
+        //    {
+        //        tmp /= j++;
+        //    }
+        //    return tmp;
+        //}
 
         public static Fraction Mediant(Fraction left, Fraction right)
         {

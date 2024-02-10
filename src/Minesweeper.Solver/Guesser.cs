@@ -298,14 +298,28 @@ namespace Minesweeper.Solver
             return new();
         }
 
-        public Dictionary<int, double> GetSafetyConfig(HashSet<Configuration> configurations)
+        public Dictionary<int, double> GetSafetyConfig(List<HashSet<Configuration>> configurations)
         {
+            var timer = new Stopwatch();
+            timer.Start();
+
             Dictionary<int, double> safetyValues = new();
 
-            foreach (Configuration configuration in configurations)
+            foreach (HashSet<Configuration> groupConfiguration in configurations)
             {
-                this.Weights.Add(configuration, Utility.nCr(this.Grid.FloatingCells.Count, this.Grid.Mines - this.Grid.FlaggedCells.Count - configuration.Sum));
+                foreach (Configuration grpCon in groupConfiguration)
+                {
+                    this.Weights.Add(grpCon, Utility.nCr(this.Grid.FloatingCells.Count, this.Grid.Mines - this.Grid.FlaggedCells.Count - grpCon.Sum));
+                }
             }
+
+
+
+            //foreach (Configuration configuration in configurations)
+            //{
+            //    this.Weights.Add(configuration, Utility.nCr(this.Grid.FloatingCells.Count, this.Grid.Mines - this.Grid.FlaggedCells.Count - configuration.Sum));
+            //}
+
 
             foreach (int unknownCell in this.Grid.UnknownCells.Select(i => i.Point.ID))
             {
@@ -314,13 +328,33 @@ namespace Minesweeper.Solver
 
             double denominator = Weights.Values.Sum();
 
-            foreach (Configuration configuration in configurations)
+            if (denominator == 0)
             {
-                foreach (int exposedCell in this.Grid.ExposedCells.Select(i => i.Point.ID).Intersect(configuration.Assignments.Where(i => i.Value == 0).Select(i => i.Key)))
+                foreach (int unknownCell in this.Grid.UnknownCells.Select(i => i.Point.ID))
                 {
-                    safetyValues[exposedCell] += Weights[configuration];
+                    safetyValues[unknownCell] = 1;
+                    return safetyValues;
                 }
             }
+
+            foreach (HashSet<Configuration> groupConfiguration in configurations)
+            {
+                foreach (Configuration grpCon in groupConfiguration)
+                {
+                    foreach (int exposedCell in this.Grid.ExposedCells.Select(i => i.Point.ID).Intersect(grpCon.Assignments.Where(i => i.Value == 0).Select(i => i.Key)))
+                    {
+                        safetyValues[exposedCell] += Weights[grpCon];
+                    }
+                }
+            }
+
+            //foreach (Configuration configuration in configurations)
+            //{
+            //    foreach (int exposedCell in this.Grid.ExposedCells.Select(i => i.Point.ID).Intersect(configuration.Assignments.Where(i => i.Value == 0).Select(i => i.Key)))
+            //    {
+            //        safetyValues[exposedCell] += Weights[configuration];
+            //    }
+            //}
 
             foreach (int exposedCell in safetyValues.Keys)
             {
@@ -342,9 +376,6 @@ namespace Minesweeper.Solver
 
         public Dictionary<int, double> GetSafety(HashSet<Configuration> configurations)
         {
-            var timer = new Stopwatch();
-            timer.Start();
-
             Dictionary<int, double> safetyValues = new();
 
             double expectedExposedMines = 0;
@@ -393,6 +424,13 @@ namespace Minesweeper.Solver
 
         public double GetProgressExposed(Cell cell, HashSet<Configuration> configurations)
         {
+            double denominator = CombinationWhereSafe[cell.Point.ID];
+
+            if (denominator == 0)
+            {
+                return 0;
+            }
+
             var timer = new Stopwatch();
             timer.Start();
 
@@ -400,20 +438,25 @@ namespace Minesweeper.Solver
 
             // Find all minecounts that yield logic
             List<int> bracketN = new();
-            for (int i = cell.AdjacentCells.Intersect(this.Grid.FlaggedCells).Count(); i <= cell.AdjacentCells.Where(i => !i.IsOpen).Count(); i++)
+            List<Cell> unopenedCells = cell.AdjacentCells.Where(i => !i.IsOpen).ToList();
+            for (int i = unopenedCells.Intersect(this.Grid.FlaggedCells).Count() + 1; i <= unopenedCells.Count(); i++)
             {
                 Inferrer solver = new(this.Grid);
-                solver.Constraints.Add(new(cell.AdjacentCells.Select(i => i.Point.ID).ToHashSet(), i));
-                solver.Solve();
+                solver.Constraints.Add(new(unopenedCells.Select(i => i.Point.ID).ToHashSet(), i));
+                //solver.Solve();
 
-                if (solver.Solutions.Any() && !solver.Contradiction)
+                //if (solver.Solutions.Any() && !solver.Contradiction)
+                //{
+                //    bracketN.Add(i);
+                //}
+
+                if (solver.HasLogic())
                 {
                     bracketN.Add(i);
                 }
             }
 
             double numerator = 0;
-            double denominator = CombinationWhereSafe[cell.Point.ID];
 
             foreach (Configuration configuration in configurations)
             {
@@ -421,7 +464,8 @@ namespace Minesweeper.Solver
                 {
                     if (bracketN.Contains(cell.AdjacentCells.Intersect(this.Grid.ExposedCells).Select(i => (int)configuration.Assignments[i.Point.ID]).Sum()))
                     {
-                        numerator += Weights[configuration];
+                        numerator += Utility.nCr(this.Grid.FloatingCells.Count, this.Grid.Mines - this.Grid.FlaggedCells.Count - configuration.Sum);
+                        //numerator += Weights[configuration];
                     }
                 }
             }
@@ -431,11 +475,58 @@ namespace Minesweeper.Solver
 
         public Dictionary<int, double> GetScore()
         {
+            var timer = new Stopwatch();
+            timer.Start();
+
             Dictionary<int, double> score = new();
 
-            HashSet<Configuration> configurations = this.GetAllConfigurations();
+            List<HashSet<Configuration>> grpConfigurations = new();
 
-            Dictionary<int, double> safety = GetSafetyConfig(configurations);
+            foreach (HashSet<Constraint> group in this.GetGroups(this.Constraints))
+            {
+                Configuration config = new(group.SelectMany(i => i.Variables).Distinct().ToList(), []);
+                HashSet<Configuration> groupConfigs = this.GetGroupConfigurations(config);
+                groupConfigs.RemoveWhere(i => i.Assignments.Values.Where(i => i < 0).Any());
+                grpConfigurations.Add(groupConfigs);
+            }
+
+            List<Configuration> combos = new() { new Configuration([], []) };
+
+            foreach (HashSet<Configuration> inner in grpConfigurations)
+            {
+                combos = combos.SelectMany(r => inner.Select(x => r + x)).ToList();
+            }
+
+            int maxMines = this.Grid.Mines - this.Grid.FlaggedCells.Count;
+
+            combos.RemoveAll(i => i.Sum > maxMines);
+            HashSet<Configuration>  configurations = combos.ToHashSet();
+
+            Console.WriteLine("Config: " + timer.Elapsed.TotalSeconds);
+
+            if (timer.Elapsed.TotalSeconds > 5)
+            {
+                Utility.WriteColor(Grid.ShowKnown());
+            }
+            timer.Restart();
+
+            return GetSafetyConfig(grpConfigurations);
+
+            Dictionary<int, double> safety = GetSafetyConfig(grpConfigurations);
+
+            //Console.WriteLine("Safety: " + timer.Elapsed.TotalSeconds);
+            //if (timer.Elapsed.TotalSeconds > 5)
+            //{
+            //    Utility.WriteColor(Grid.ShowKnown());
+            //}
+            //timer.Restart();
+
+            //Console.WriteLine("Safety: " + timer.Elapsed.TotalSeconds);
+            //if (timer.Elapsed.TotalSeconds > 5)
+            //{
+            //    Utility.WriteColor(Grid.ShowKnown());
+            //}
+
 
             for (int i = 0; i <= 8; i++)
             {
@@ -448,6 +539,13 @@ namespace Minesweeper.Solver
                 }
             }
 
+            Console.WriteLine("PFloating: " + timer.Elapsed.TotalSeconds);
+            if (timer.Elapsed.TotalSeconds > 5)
+            {
+                Utility.WriteColor(Grid.ShowKnown());
+            }
+            timer.Restart();
+
             double maxSafety = safety.Values.OrderByDescending(i => i).First();
 
             foreach (Cell exposedCell in this.Grid.ExposedCells)
@@ -459,6 +557,13 @@ namespace Minesweeper.Solver
                     score.Add(ID, safety[ID] * GetProgressExposed(exposedCell, configurations));
                 }
             }
+
+            Console.WriteLine("EFloating: " + timer.Elapsed.TotalSeconds);
+            if (timer.Elapsed.TotalSeconds > 5)
+            {
+                Utility.WriteColor(Grid.ShowKnown());
+            }
+            timer.Restart();
 
             foreach (int cell in score.Keys)
             {

@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
 using Fractions;
+using System.Net;
 
 namespace Minesweeper.Solver
 {
@@ -12,13 +13,97 @@ namespace Minesweeper.Solver
     {
         public const string FileName = "RawWinData.csv";
 
-        public const int MaxAttempts = 10000;
+        public const int MaxAttempts = 1000;
 
         public static void Main()
         {
-            GetWinRate(9, 9, 10);
-            //Grid grid = new(16, 16, 40);
-            //Solve(grid);
+            //Main1();
+            GetWinRate(16, 16, 40);
+        }
+
+        public static void Main2()
+        {
+            Console.Write("Stern-Bocrot Sequence Number: ");
+            int sequenceNumber = int.Parse(Console.ReadLine());
+
+            List<Fraction> sequence = Utility.GenerateLeftSternBocrotSequence(sequenceNumber);
+
+            Dictionary<(int, int, int), decimal> completedDimensions = [];
+
+            using (StreamReader reader = new(FileName))
+            {
+                while (!reader.EndOfStream)
+                {
+                    string line = reader.ReadLine();
+
+                    if (line == null)
+                    {
+                        continue;
+                    }
+
+                    List<string> information = [.. line.Split(",")];
+
+                    int p = int.Parse(information[0]);
+                    int q = int.Parse(information[1]);
+                    int m = int.Parse(information[2]);
+                    decimal winRate = decimal.Parse(information[3]);
+
+                    completedDimensions.Add((p, q, m), winRate);
+                }
+            }
+
+            List<(int, int)> validBoardSizes = [];
+
+            foreach (Fraction fraction in sequence)
+            {
+                if (fraction.Numerator == 0)
+                {
+                    continue;
+                }
+
+                int maxProduct = Math.Max(3, (int)decimal.Round(36/(decimal)fraction.Numerator));
+                for (int i = 1; i <= maxProduct; i++)
+                {
+                    validBoardSizes.Add(((int)fraction.Numerator * i, (int)fraction.Denominator * i));
+                }
+            }
+
+            foreach ((int, int) boardSize in validBoardSizes)
+            {
+                bool zeroAchieved = false;
+                decimal previousWinRate = 0;
+
+                for (int m = 1; m < boardSize.Item1 * boardSize.Item2; m++)
+                {
+                    if (completedDimensions.ContainsKey((boardSize.Item1, boardSize.Item2, m)))
+                    {
+                        previousWinRate = completedDimensions[(boardSize.Item1, boardSize.Item2, m)];
+                        continue;
+                    }
+
+                    if (zeroAchieved)
+                    {
+                        EndDimension(boardSize.Item1, boardSize.Item2, m, 0);
+                        continue;
+                    }
+
+                    decimal winRate = GetWinRate(boardSize.Item1, boardSize.Item2, m);
+
+                    if (winRate > previousWinRate && (double)m/(boardSize.Item1 * boardSize.Item2) > 0.5)
+                    {
+                        winRate = 0;
+                    }
+
+                    EndDimension(boardSize.Item1, boardSize.Item2, m, winRate);
+
+                    previousWinRate = winRate;
+
+                    if (winRate == 0)
+                    {
+                        zeroAchieved = true;
+                    }
+                }
+            }
         }
 
         public static void Main1()
@@ -60,9 +145,31 @@ namespace Minesweeper.Solver
                 .Except(completedDimensions)
                 .ToList();
 
+            bool zeroAchieved = false;
+            (int, int) currentDimension = (0, 0);
+
             foreach ((int, int, int) dimension in remainingDimensions)
             {
-                GetWinRate(dimension.Item1, dimension.Item2, dimension.Item3);
+                if (currentDimension != (dimension.Item1, dimension.Item2))
+                {
+                    currentDimension = (dimension.Item1, dimension.Item2);
+                    zeroAchieved = false;
+                }
+
+                if (zeroAchieved)
+                {
+                    EndDimension(dimension.Item1, dimension.Item2, dimension.Item3, 0);
+                    continue;
+                }
+
+                decimal winRate = GetWinRate(dimension.Item1, dimension.Item2, dimension.Item3);
+
+                if (winRate == 0)
+                {
+                    zeroAchieved = true;
+                }
+
+                EndDimension(dimension.Item1, dimension.Item2, dimension.Item3, winRate);
             }
         }
 
@@ -70,21 +177,21 @@ namespace Minesweeper.Solver
         {
             List<(int, int, int)> res = [];
 
-            for (int i = 1; i <= maxDim; i++)
-            {
-                for (int j = i; j <= maxDim; j++)
+            //for (int i = 1; i <= maxDim; i++)
+            //{
+                for (int j = 1; j <= maxDim; j++)
                 {
-                    for (int m = 1; m < i * j; m++)
+                    for (int m = 1; m < maxDim * j; m++)
                     {
-                        res.Add((i, j, m));
+                        res.Add((j, maxDim, m));
                     }
                 }
-            }
+            //}
 
             return res;
         }
 
-        public static void GetWinRate(int length, int width, int mines)
+        public static decimal GetWinRate(int length, int width, int mines)
         {
             int wins = 0;
             decimal previousWinRate = 0;
@@ -102,14 +209,14 @@ namespace Minesweeper.Solver
                 if (previousWinRate == currentWinRate)
                 {
                     streak++;
-                    if (streak == 50 && i > 2500)
+                    if (streak == 5 && i > 250)
                     {
                         EndDimension(length, width, mines, currentWinRate);
                     }
                 }
                 previousWinRate = currentWinRate;
 
-                if (i % 10 == 0)
+                if (i % 1 == 0)
                 {
                     double timeTaken = timer.Elapsed.TotalSeconds;
                     Console.WriteLine($"{length}x{width}/{mines}: {wins} wins out of {i} attempts ({timeTaken / i}s per attempt)");
@@ -118,7 +225,7 @@ namespace Minesweeper.Solver
 
             timer.Stop();
 
-            EndDimension(length, width, mines, previousWinRate);
+            return previousWinRate;
         }
 
         public static void EndDimension(int length, int width, int mines, decimal winrate)
@@ -168,11 +275,27 @@ namespace Minesweeper.Solver
 
                     Dictionary<int, double> scores = guesser.GetScore();
 
-                    double maxScore = scores.OrderByDescending(kvp => kvp.Value).First().Value;
-                    List<Cell> maxScorers = scores.Where(i => i.Value == maxScore).Select(i => i.Key).Select(j => grid.Cells.Where(i => i.Point.ID == j).First()).ToList();
-                    Cell toOpen = maxScorers.OrderBy(i => i.AdjacentCells.Intersect(grid.ExposedCells).Count()).First();
+                    if (scores.ContainsValue(1) || scores.ContainsKey(0))
+                    {
+                        foreach (Cell safeCells in scores.Where(i => i.Value == 1).Select(i => i.Key).Select(i => grid.Cells.Where(j => j.Point.ID == i).First()))
+                        {
+                            grid.OpenCell(safeCells);
+                        }
 
-                    grid.OpenCell(toOpen);
+                        foreach (Cell minedCells in scores.Where(i => i.Value == 1).Select(i => i.Key).Select(i => grid.Cells.Where(j => j.Point.ID == i).First()))
+                        {
+                            minedCells.HasFlag = true;
+                        }
+                    }
+                    else
+                    {
+
+                        double maxScore = scores.OrderByDescending(kvp => kvp.Value).First().Value;
+                        List<Cell> maxScorers = scores.Where(i => i.Value == maxScore).Select(i => i.Key).Select(j => grid.Cells.Where(i => i.Point.ID == j).First()).ToList();
+                        Cell toOpen = maxScorers.OrderBy(i => i.AdjacentCells.Count).ThenByDescending(i => i.AdjacentCells.Intersect(grid.OpenedCells).Count()).First();
+
+                        grid.OpenCell(toOpen);
+                    }
                 }
             }
 

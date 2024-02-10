@@ -51,6 +51,16 @@ namespace Minesweeper.Solver
             this.Solutions = [];
         }
 
+        public bool HasLogic()
+        {
+            SolveTrivials();
+            ConstructConstraints();
+            RemoveUnnecessaryConstraints();
+            UpdateSolvedConstraints();
+
+            return Solutions.Any() && !Contradiction;
+        }
+
         /// <summary>
         /// Solves the given constraints. Solutions can be accessed via <see cref="Solutions"/>.
         /// </summary>
