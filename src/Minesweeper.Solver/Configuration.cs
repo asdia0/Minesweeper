@@ -56,11 +56,19 @@ namespace Minesweeper.Solver
             }
         }
 
-        public static Configuration operator +(Configuration left, Configuration right)
+        public static Configuration operator *(Configuration left, Configuration right)
         {
             return new Configuration()
             {
                 Assignments = left.Assignments.Concat(right.Assignments).ToDictionary(i => i.Key, i => i.Value)
+            };
+        }
+
+        public static Configuration operator +(Configuration left, Configuration right)
+        {
+            return new Configuration()
+            {
+                Assignments = left.Assignments.ToDictionary(orig => orig.Key, orig => orig.Value + right.Assignments[orig.Key])
             };
         }
     }

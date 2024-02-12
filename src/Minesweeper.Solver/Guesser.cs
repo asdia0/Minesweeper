@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Minesweeper.Solver
 {
@@ -136,7 +137,7 @@ namespace Minesweeper.Solver
 
             foreach (List<Configuration> inner in configurations)
             {
-                combos = combos.SelectMany(r => inner.Select(x => r + x)).ToList();
+                combos = combos.SelectMany(r => inner.Select(x => r * x)).ToList();
             }
 
             int maxMines = this.Grid.Mines - this.Grid.FlaggedCells.Count;
@@ -317,6 +318,11 @@ namespace Minesweeper.Solver
 
             double floatingSafety = 1 - expectedFloatingMines / this.Grid.FloatingCells.Count;
 
+            if (floatingSafety == 0)
+            {
+                Console.WriteLine(expectedFloatingMines);
+            }
+
             foreach (int floatingCell in Utility.CellsToIDs(this.Grid.FloatingCells))
             {
                 safetyValues[floatingCell] = floatingSafety;
@@ -325,9 +331,73 @@ namespace Minesweeper.Solver
             return safetyValues;
         }
 
+        public Dictionary<int, double> GetSafety(List<HashSet<Configuration>> groupConfigurations)
+        {
+            //if (groupConfigurations.Count == 0)
+            //{
+            //    return this.Grid.UnknownCells.ToDictionary(key => key.Point.ID, value => (double)(this.Grid.Mines - this.Grid.FlaggedCells.Count) / this.Grid.UnknownCells.Count);
+            //}
+
+            Dictionary<int, double> safetyValues = this.Grid.UnknownCells.ToDictionary(key => key.Point.ID, value => (double)0);
+
+            Dictionary<Configuration, double> weights = [];
+
+            foreach (HashSet<Configuration> groupConfiguration in groupConfigurations)
+            {
+                foreach (Configuration configuration in groupConfiguration)
+                {
+                    weights.Add(configuration, Utility.Choose(this.Grid.FloatingCells.Count, this.Grid.Mines - this.Grid.FlaggedCells.Count - configuration.Sum));
+                }
+            }
+
+            double denominator = weights.Values.Sum();
+
+            foreach (HashSet<Configuration> groupConfiguration in groupConfigurations)
+            {
+                foreach (Configuration configuration in groupConfiguration)
+                {
+                    foreach (int exposedCell in Utility.CellsToIDs(this.Grid.ExposedCells).Intersect(configuration.Assignments.Where(i => i.Value == 0).Select(i => i.Key)))
+                    {
+                        safetyValues[exposedCell] += weights[configuration];
+                    }
+                }
+            }
+
+            foreach (int exposedCell in safetyValues.Keys)
+            {
+                safetyValues[exposedCell] = safetyValues[exposedCell] / denominator;
+            }
+
+            double expectedFloatingMines = this.Grid.Mines - this.Grid.FlaggedCells.Count - safetyValues.Count + safetyValues.Values.Sum();
+
+            double floatingSafety = 1 - expectedFloatingMines / this.Grid.FloatingCells.Count;
+
+            foreach (int floatingCell in Utility.CellsToIDs(this.Grid.FloatingCells))
+            {
+                safetyValues[floatingCell] = floatingSafety;
+            }
+
+            return safetyValues;
+        }
         public Dictionary<int, double> GetScore()
         {
-            return this.GetSafety(this.GetAllConfigurations());
+            if (Grid.ExposedCells.Count == 0)
+            {
+                return this.Grid.UnknownCells.ToDictionary(key => key.Point.ID, value => 1 - (double)(this.Grid.Mines - this.Grid.FlaggedCells.Count) / this.Grid.UnknownCells.Count);
+            }
+
+            List<HashSet<Configuration>> groupConfigurations = [];
+
+            foreach (HashSet<Constraint> group in this.GetGroups(this.Constraints))
+            {
+                Configuration config = new(group.SelectMany(i => i.Variables).Distinct().ToList(), []);
+                HashSet<Configuration> groupConfiguration = this.GetGroupConfigurations(config);
+                groupConfiguration.RemoveWhere(i => i.Assignments.Values.Where(i => i < 0).Any());
+                groupConfigurations.Add([.. groupConfiguration]);
+            }
+
+            return this.GetSafety(groupConfigurations);
+            //return this.GetSafety(this.GetAllConfigurations());
         }
     }
 }

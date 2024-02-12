@@ -38,8 +38,8 @@ namespace Minesweeper.Solver
             }
 
             // Set up global constraint
-            HashSet<int> unknownCellVariables = Utility.CellsToIDs(grid.UnknownCells).ToHashSet();
-            this.Constraints.Add(new(unknownCellVariables, grid.Mines - grid.FlaggedCells.Count));
+            //HashSet<int> unknownCellVariables = Utility.CellsToIDs(grid.UnknownCells).ToHashSet();
+            //this.Constraints.Add(new(unknownCellVariables, grid.Mines - grid.FlaggedCells.Count));
         }
 
         /// <summary>

@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Fractions;
+using Newtonsoft.Json;
 
 namespace Minesweeper.Solver
 {
@@ -13,12 +15,11 @@ namespace Minesweeper.Solver
 
         public const int MaxAttempts = 1000;
 
-        public const int UpdateInterval = 10;
+        public const int UpdateInterval = 1;
 
         public static void Main()
         {
-            //Main1();
-            GetWinRate(9, 9, 10);
+            Main1();
         }
 
         public static void Main2()
@@ -34,7 +35,7 @@ namespace Minesweeper.Solver
             {
                 while (!reader.EndOfStream)
                 {
-                    string line = reader.ReadLine();
+                    string? line = reader.ReadLine();
 
                     if (line == null)
                     {
@@ -123,7 +124,7 @@ namespace Minesweeper.Solver
             {
                 while (!reader.EndOfStream)
                 {
-                    string line = reader.ReadLine();
+                    string? line = reader.ReadLine();
 
                     if (line == null)
                     {
@@ -191,8 +192,8 @@ namespace Minesweeper.Solver
         public static decimal GetWinRate(int length, int width, int mines)
         {
             int wins = 0;
-            decimal previousWinRate = 0;
-            int streak = 0;
+            //decimal previousWinRate = 0;
+            //int streak = 0;
 
             Console.WriteLine("---");
 
@@ -201,28 +202,43 @@ namespace Minesweeper.Solver
 
             for (int i = 1; i <= MaxAttempts; i++)
             {
-                wins += Solve(new(length, width, mines));
-                decimal currentWinRate = (decimal)wins / i;
-                if (previousWinRate == currentWinRate)
+                bool gameSimulated = false;
+
+                while (!gameSimulated)
                 {
-                    streak++;
-                    if (streak == 5 && i > 250)
+                    try
                     {
-                        EndDimension(length, width, mines, currentWinRate);
+                        wins += Solve(new(length, width, mines));
+                        gameSimulated = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
                     }
                 }
 
-                previousWinRate = currentWinRate;
+                //decimal currentWinRate = (decimal)wins / i;
+                //if (currentWinRate == previousWinRate)
+                //{
+                //    streak++;
+                //    if (streak >= 50 && i > 250)
+                //    {
+                //        return previousWinRate;
+                //    }
+                //}
+
+                //previousWinRate = currentWinRate;
 
                 if (i % UpdateInterval == 0)
                 {
-                    Console.WriteLine($"{length}x{width}/{mines}: {wins} wins out of {i} attempts ({timer.Elapsed.TotalSeconds / i}s per attempt)");
+                    Console.WriteLine($"{length}x{width}/{mines}: {wins} wins out of {i} attempts ({timer.Elapsed.TotalMilliseconds}ms per attempt)");
+                    timer.Restart();
                 }
             }
 
             timer.Stop();
 
-            return previousWinRate;
+            return (decimal)wins / MaxAttempts;
         }
 
         public static int Solve(Grid grid)
@@ -260,29 +276,39 @@ namespace Minesweeper.Solver
                 else
                 {
                     Guesser guesser = new(grid);
-                    Dictionary<int, double> scores = guesser.GetScore();
 
-                    // Open guaranteed safe cells.
-                    foreach (Cell safeCells in Utility.IDsToCells(grid, scores.Where(i => i.Value == 1).Select(i => i.Key)))
+                    var task = Task.Run(guesser.GetScore);
+
+                    if (task.Wait(TimeSpan.FromSeconds(3)))
                     {
-                        grid.OpenCell(safeCells);
-                    }
+                        Dictionary<int, double> scores = guesser.GetScore();
 
-                    // Flag guaranteed mined cells.
-                    foreach (Cell minedCells in Utility.IDsToCells(grid, scores.Where(i => i.Value == 0).Select(i => i.Key)))
+                        // Open guaranteed safe cells.
+                        foreach (Cell safeCells in Utility.IDsToCells(grid, scores.Where(i => i.Value == 1).Select(i => i.Key)))
+                        {
+                            grid.OpenCell(safeCells);
+                        }
+
+                        //// Flag guaranteed mined cells.
+                        //foreach (Cell minedCells in Utility.IDsToCells(grid, scores.Where(i => i.Value == 0).Select(i => i.Key)))
+                        //{
+                        //    grid.FlagCell(minedCells);
+                        //}
+
+                        // Determine cell to guess
+                        double maxScore = scores.OrderByDescending(kvp => kvp.Value).First().Value;
+
+                        Cell toOpen = Utility.IDsToCells(grid, scores.Where(i => i.Value == maxScore).Select(i => i.Key))
+                            .OrderBy(i => i.AdjacentCells.Count)
+                            .ThenByDescending(i => i.AdjacentCells.Intersect(grid.OpenedCells).Count())
+                            .First();
+
+                        grid.OpenCell(toOpen);
+                    }
+                    else
                     {
-                        grid.FlagCell(minedCells);
+                        throw new MinesweeperException("Solver took too long.");
                     }
-
-                    // Determine cell to guess
-                    double maxScore = scores.OrderByDescending(kvp => kvp.Value).First().Value;
-
-                    Cell toOpen = Utility.IDsToCells(grid, scores.Where(i => i.Value == maxScore).Select(i => i.Key))
-                        .OrderBy(i => i.AdjacentCells.Count)
-                        .ThenByDescending(i => i.AdjacentCells.Intersect(grid.OpenedCells).Count())
-                        .First();
-
-                    grid.OpenCell(toOpen);
                 }
             }
 
